@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="hypertile3">
+		<!-- Crystalize put this together, but Zueuk is the real genius! ^_^ -->
+		<node name="input_params">
+			<real name="scale">1.0</real>
+			<real name="hypertile3_p">3.0</real>
+			<real name="hypertile3_q">3.0</real>
+			<real name="hypertile3_r">4.0</real>
+			<real name="hypertile3_shift"minval="0.0"maxval="1.0">0.5</real>
+			<real name="hypertile3_full_rotation">0.0</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="scale" />
+			<real name="h" />
+			<real name="b1" />
+			<real name="b2" />
+			<real name="n" />
+			<real name="shift" />
+			<real name="p_" />
+			<real name="q_" />
+			<real name="r_" />
+			<real name="frot" />
+		</node>
+
+		<int name="num_unit_randoms">5</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				let
+					o = acosh((cos(pi() / hypertile3_p) + cos(pi() / hypertile3_q) * cos(pi() / hypertile3_r)) / (sin(pi() / hypertile3_q) * sin(pi() / hypertile3_r)))
+					p = asinh(sin(pi() / hypertile3_q) / sin(pi() / hypertile3_p) * sinh(o))
+					q = asinh(sin(pi() / hypertile3_r) * sinh(p))
+					r = asinh(sin(pi() / hypertile3_r) * sinh(p) / sin(pi() / hypertile3_q))
+					h = tanh(q / 2.0)
+					b1 = tanh(acosh(cosh(r) / cosh(q)) / 2.0)
+					b2 = tanh(acosh(cosh(p) / cosh(q)) / 2.0)
+					n = if hypertile3_shift < 0.25 then 0.0
+								else if hypertile3_shift < 0.5 then hypertile3_p
+									else if hypertile3_shift < 0.75 then hypertile3_q
+										else hypertile3_r
+					p_ = hypertile3_p
+					q_ = hypertile3_q
+					r_ = hypertile3_r
+				in
+					hypertile3_init_result(scale, h, b1, b2, n, hypertile3_shift, p_, q_, r_, hypertile3_full_rotation)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					rad = pi() / 180
+					rot1 = (360 / p_) * floor(unit_rnd_2 * p_) * rad
+					rot2 = (360 / q_) * floor(unit_rnd_3 * q_) * rad
+					rot3 = (360 / r_) * floor(unit_rnd_4 * r_) * rad
+					c1 = complex(h, 0.0)
+					c2 = complex(0.0, b1)
+					c3 = complex(0.0, b2)
+					z0 = complex(p_in.x, p_in.y) / scale * complex(cos(frot*rad), sin(frot*rad))
+					z = if shift < 0.25 then z0
+							else if shift < 0.5 then (z0 + c1) / (c1 * z0 + 1.0)
+								else if shift < 0.75 then (z0 - c2) / (c2 * z0 + 1.0)
+								 else (z0 + c3) / (-c3 * z0 + 1.0)
+
+					m0 = (z - c1) / (-c1 * z + 1.0)
+					r1 = complex(cos(rot1), sin(rot1)) * m0
+					m0f = (r1 + c1) / (c1 * r1 + 1.0)
+
+					m1 = (z + c2) / (-c2 * z + 1.0)
+					r2 = complex(cos(rot2), sin(rot2)) * m1
+					m1f = (r2 - c2) / (c2 * r2 + 1.0)
+
+					m2 = (z - c3) / (c3 * z + 1.0)
+					r3 = complex(cos(rot3), sin(rot3)) * m2
+					m2f = (r3 + c3) / (-c3 * r3 + 1.0)
+
+					pfr = if shift < 0.25 then 0.0
+									else if shift < 0.5 then rot1
+										else if shift < 0.75 then rot2
+											else rot3
+					fr = floor(unit_rnd_1 * n) * pfr
+					rand = unit_rnd_0 * 3.0
+					f3 = if rand < 1.0 then m0f else if rand < 2.0 then m1f else m2f
+					f0 = if shift < 0.25 then f3
+								else if shift < 0.5 then (f3 - c1) / (-c1 * f3 + 1.0)
+									else if shift < 0.75 then (f3 + c2) / (-c2 * f3 + 1.0)
+										else (f3 - c3) / (c3 * f3 + 1.0)
+					f = if shift < 0.25 then f0
+							else complex(cos(fr), sin(fr)) * f0
+				in
+					toVec2(f * complex(cos(-frot*rad), sin(-frot*rad))) * scale
+			]]>
+		</string>
+	</transform_def>
+</user_transforms>

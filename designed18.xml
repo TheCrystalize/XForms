@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="designed18">
+		<node name="input_params">
+			<real name="designed18">1</real>
+			<real name="fill" minval="0" maxval="0.005">0</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="fill" />
+		</node>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				designed18_init_result(designed18, fill)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					r = 1 / length(p_in)
+					a = p_in * p_in.x
+					b = p_in * p_in.y
+					zw = complex(length(p_in), length(p_in))
+					quat = vec4(a.x * b.x - a.y * b.y - zw.re * zw.im - zw.re * zw.im,
+								a.x * b.y + a.y * b.x + zw.re * zw.im - zw.re * zw.im,
+								a.x * zw.im - a.y * zw.im + zw.re * b.x + zw.re * b.y,
+								a.x * zw.im + a.y * zw.im - zw.re * b.y + zw.re * b.x)
+					s = (e0(quat) * e2(quat)) / (e1(quat) * e3(quat))
+					t = if r > s then tan(p_in.x) * sin(length(vec2(e0(quat), e2(quat)))) else cos(p_in.y) / fmod(e1(quat), e3(quat)) * fourpi()
+					z = t * cos(length(p_in * atan(p_in.x * p_in.y)) * sin(length(p_in) + cos(p_in.y / fourpi()))) * (s / pi())
+					con1 = abs(z) < r
+					con2 = abs(z) > r
+				in
+					(if if fill > 0.0 then con1 else con2 then p_in else vec2(0.0)) * weight
+			]]>
+		</string>
+	</transform_def>
+
+
+</user_transforms>

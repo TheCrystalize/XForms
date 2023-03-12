@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="gnarly">
+		<!-- translated to winter by Crystalize and ToanLish --> 
+		<node name="input_params">
+			<real name="gnarly">1</real>
+			<real name="cellsize">1</real>
+			<real name="twist">1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="cellsize" />
+			<real name="twist" />
+			<real name="mr2" />
+		</node>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				let
+					mr2 = 0.25 * cellsize * cellsize
+				in
+					gnarly_init_result(gnarly, cellsize, twist, mr2)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					cx = (floor(p_in.x / cellsize) + 0.5) * cellsize
+					cy = (floor(p_in.y / cellsize) + 0.5) * cellsize
+					lx = p_in.x - cx
+					ly = p_in.y - cy
+					f = if lx * lx + ly * ly <= mr2
+						let
+							r = (lx * lx + ly * ly) / mr2
+							theta = twist * log(r)
+							s = sin(theta)
+							c = cos(theta)
+						in
+							vec2(cx + c * lx + s * ly, cy - s * lx + c * ly)
+						else
+							p_in
+				in
+					if(cellsize != 0.0, f, p_in) * weight
+			]]>
+		</string>
+	</transform_def>
+
+
+</user_transforms>

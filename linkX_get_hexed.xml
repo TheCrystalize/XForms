@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="linkX_get_hexed">
+		<node name="input_params">
+			<real name="get_hexed">1</real>
+			<real name="get_hexed_size">1</real>
+			<real name="get_hexed_inner_weight" minval="0.0"maxval="1.0">.75</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="hsize" />
+			<real name="iw" />
+			<real name="rpow" />
+			<real name="alpha" />
+			<real name="alphaco" />
+			<real name="roundco" />
+			<real name="comp" />
+		</node>
+
+		<int name="num_unit_randoms">1</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				let
+					hsize = halfsqrt3() / get_hexed_size
+					rpow = max(6.0, 2.0)
+					alpha = twopi() / rpow
+					alphaco = tan(alpha * 0.5) * 2
+					roundco = 0.0 / sin(alpha * 0.5) / rpow * 2.0
+					comp = if 1.0 <= 0 then 0.0 else 1.0
+				in
+					linkX_get_hexed_init_result(get_hexed, hsize, get_hexed_inner_weight, rpow, alpha, alphaco, roundco, comp)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					XY0 = p_in * hsize
+					x = (0.57735026918962576450914878050196 * XY0.x - XY0.y / 3.0)
+					z = (2.0 * XY0.y / 3.0)
+					y = -x - z
+					rx = floor(x + 0.5)
+					ry = floor(y + 0.5)
+					rz = floor(z + 0.5)
+					x_diff = abs(rx - x)
+					y_diff = abs(ry - y)
+					z_diff = abs(rz - z)
+					r_final = if (x_diff > y_diff && x_diff > z_diff)
+										then vec3(-ry-rz, ry, rz)
+										else if (y_diff > z_diff)
+								 					then vec3(rx, -rx-rz, rz)
+								 					else vec3(rx, ry, -rx-ry)
+					FXY_h = vec2(sqrt3() * e0(r_final) + halfsqrt3() * e2(r_final), 1.5 * e2(r_final))
+					hm_out = (XY0 - FXY_h) * (weight / halfsqrt3())
+
+					rad = length(p_in)
+					ang = atan2(p_in.y, p_in.x)
+					s = sin(ang)
+					c = cos(ang)
+					crop_out = if rad > 10000000 || rad < 1.0
+											then if 1.0 == 1.0
+														then vec2(0.0, 0.0)
+														else vec2(c, s) * (10000000)
+											else p_in
+					dang = (atan2(crop_out.y, crop_out.x) + pi()) / alpha
+					rad2 = length(crop_out)
+					zang1 = toReal(floorToInt(dang))
+					xang1 = dang - zang1
+					xang2 = if xang1 > 0.5 then 1.0 - xang1 else xang1
+					zang = if xang1 > 0.5 then zang1 + 1.0 else zang1
+					sign = if xang1 > 0.5 then -1.0 else 1.0
+					xang = if comp == 1.0 && 1.0 >= 1.0
+									then atan(xang2 * alphaco) / alpha
+									else xang2
+					coeff_1 = if 1.0 == 0.0
+										then 1.0
+										else let
+											coeff0 = 1.0 / cos(xang * alpha)
+										in
+											if 0.0 != 0.0
+											then let
+												wwidth = if 1.0 != 1.0
+																	then exp(log(xang * 2.0) * 1.0) * roundco
+																	else xang * 2.0 * roundco
+											in
+												abs((1.0 - wwidth) * coeff0 + wwidth)
+											else coeff0
+					coeff = if (1.0) != 1.0
+									then exp(log(coeff_1) * 1.0)
+									else coeff_1
+					ang2 = (zang + sign * xang) * alpha - pi()
+					shape_out = vec2(cos(ang2), sin(ang2)) * (weight * coeff * rad2)
+				in
+					lerp(hm_out, shape_out, if unit_rnd_0 >= iw
+																	then 0.0
+																	else 1.0)
+			]]>
+		</string>
+	</transform_def>
+</user_transforms>

@@ -24,11 +24,10 @@
 		<string name="winter_eval_function">
 			<![CDATA[
 				let
-					r = mat2x2(cos(rot), -sin(rot),
-											sin(rot), cos(rot))
-					v = r * p_in
+					r = exp(complex(0,rot))
+					v = r * complex(p_in.x, p_in.y)
 				in
-					vec2(v.x + x, v.y + y) * weight
+					vec2(v.re + x, v.im + y) * weight
 			]]>
 		</string>
 	</transform_def>

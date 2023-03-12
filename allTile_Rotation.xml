@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="allTile_Rotation">
+		<node name="input_params">
+			<real name="allTile_Rotation">1</real>
+			<real name="P">3</real>
+			<real name="Q">5</real>
+			<real name="Rotation">0</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="prescale" />
+			<real name="p" />
+			<real name="tpop" />
+			<real name="pval" />
+			<real name="ptc" />
+			<real name="qtc" />
+			<real name="ro" />
+		</node>
+
+		<int name="num_unit_randoms">2</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				let
+					pv = sin(pi()/P)
+					pval = (1.0/sqrt(1.0 / (pv*pv) - 1.0)) * (1.0 / pv - 1.0)
+				in
+					allTile_Rotation_init_result(allTile_Rotation, 1/allTile_Rotation, P, twopi() / P, pval, 2 * cos(pi()/P), 2 * cos(pi()/Q), Rotation * (pi() / 180))
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					rot = (floor(unit_rnd_1 * p) * tpop)
+					pvi = complex(0, pval)
+					pci = complex(0, ptc)
+
+					z0 = complex(p_in.x, p_in.y) * prescale * complex(cos(-ro), sin(-ro))
+					z1 = (z0 - 1.0) / (z0 + 1.0)
+					z2 = (z1 - pvi) / (-conj(pvi) * z1 + 1.0)
+					za = 1.0 / (z2 + pci)
+					zb = 1.0 / (-z2 + qtc)
+					z3 = if(unit_rnd_0 > 0.5, za, zb)
+					z4 = (z3 + pvi) / (conj(pvi) * z3 + 1.0)
+					z = ((z4 + 1.0) / (-z4 + 1.0)) * complex(cos(rot), sin(rot)) * complex(cos(ro), sin(ro))
+				in
+					toVec2(z) * weight
+			]]>
+		</string>
+	</transform_def>
+
+
+</user_transforms>

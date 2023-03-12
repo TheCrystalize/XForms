@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="minkowscope">
+		<node name="input_params">
+			<real name="minkowscope">1</real>
+			<real name="minkowscope_separation">1</real>
+			<real name="minkowscope_frequencyx">1</real>
+			<real name="minkowscope_frequencyy">1</real>
+			<real name="minkowscope_amplitude">1</real>
+			<real name="minkowscope_perturbation">1</real>
+			<real name="minkowscope_damping">0</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="sep" />
+			<real name="frqx" />
+			<real name="frqy" />
+			<real name="amp" />
+			<real name="pert" />
+			<real name="damp" />
+		</node>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				minkowscope_init_result(minkowscope, minkowscope_separation, minkowscope_frequencyx * halfpi(), minkowscope_frequencyy * halfpi(),
+					minkowscope_amplitude, minkowscope_perturbation, minkowscope_damping)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					awv = if(frqx <= 0.0, 1, 0)
+					d = if(abs(damp) <= epsilon(), 1, 0)
+					pt = pert * minkosine(frqy * p_in.y, awv)
+					t = if(d == 0,
+								amp * (minkocosine(frqx * p_in.x + pt, awv) + sep),
+								amp * exp(-abs(p_in.x) * damp) * (minkocosine(frqx * p_in.x + pt, awv) + sep))
+				in
+					if(abs(p_in.y) <= t,
+							-p_in, p_in) * weight
+			]]>
+		</string>
+	</transform_def>
+</user_transforms>

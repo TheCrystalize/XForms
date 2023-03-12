@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="erf">
+		<node name="input_params">
+			<real name="erf">1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+		</node>
+
+		<int name="num_unit_randoms">2</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				erf_init_result(erf)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				vec2(errFunc(p_in.x), errFunc(p_in.y)) * weight
+			]]>
+		</string>
+	</transform_def>
+
+
+</user_transforms>

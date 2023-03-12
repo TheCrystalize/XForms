@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="smartshape2">
+		<!-- Crystalize put this together
+	 				zy0rg is the brilliant wizard to thank though :D -->
+		<node name="input_params">
+			<real name="smartshape2">1</real>
+			<real name="smartshape2_n">3</real>
+			<real name="smartshape2_angle">-1</real>
+			<real name="smartshape2_bind">0</real>
+			<real name="smartshape2_compensation">0</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="alpha" />
+			<real name="dist" />
+			<real name="cIn" />
+			<real name="distSq" />
+			<real name="distXRX2" />
+			<real name="mult" />
+			<real name="sqrDistX4" />
+			<real name="cX4" />
+			<real name="comp" />
+		</node>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				let
+					alpha = twopi() / smartshape2_n
+					halfAlpha = alpha * 0.5
+					inMin = halfpi() - halfAlpha
+					inMax = inMin - pi()
+
+					a = (inMin - inMax) / (inMin + inMax)
+					b = inMin * (a * a - a)
+					c = -b / a
+					inAng = b / (smartshape2_angle + a) + c
+
+					inGamma = pi() - halfAlpha - inAng
+					dist = sin(inGamma) / sin(inAng)
+					rad = sin(halfAlpha) / sin(inAng)
+
+					mult = if(smartshape2_bind > 0.0, 1.0 / (dist - rad), 1.0)
+
+					distSq = dist * dist + rad * rad
+					distXRX2 = dist * rad * 2.0
+					sqrDistX4 = 4.0 * dist * dist
+					cX4 = 4.0 * rad * rad - sqrDistX4
+					cIn = 2.0 * (dist * sin(inAng) - rad * inAng)
+
+				in
+					smartshape2_init_result(smartshape2, alpha, dist, cIn, distSq, distXRX2, mult, sqrDistX4, cX4, smartshape2_compensation)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					dang = atan2(p_in.y, p_in.x) / alpha + 0.5
+					zang = floor(dang)
+					xang = dang - zang - 0.5
+				in
+					if(comp > 0.0,
+						let
+							radius = length(p_in)
+							matIn = mat3x3(radius, -dist, xang * cIn, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+							ss0 = find(matIn, -10)
+							ss = iterate(find, matIn)
+							inverseAngle = ss.e4
+							range = sqrt(distSq - distXRX2 * cos(inverseAngle))
+							angle = asin(radius * sin(inverseAngle) / range) + zang * alpha
+							coeff = range * mult * radius
+						in
+							vec2(cos(angle), sin(angle)) * -coeff,
+						let
+							angcos = cos(xang * alpha)
+							dsqrt = sqrt(sqrDistX4 * angcos * angcos + cX4)
+							coeff = (-dsqrt + 2.0 * dist * angcos) / 2.0 * mult
+						in
+							p_in * coeff) * -weight
+			]]>
+		</string>
+	</transform_def>
+</user_transforms>

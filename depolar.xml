@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="depolar">
+		<!-- transform by zy0rg, brought to you by Crystalize -->
+		<node name="input_params">
+			<real name="depolar">1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+		</node>
+
+		<int name="num_unit_randoms">1</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				depolar_init_result(depolar)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					angle = p_in.x * pi() * 2.0
+					range = p_in.y
+				in
+					vec2(cos(angle), sin(angle)) * range * weight
+			]]>
+		</string>
+	</transform_def>
+
+
+</user_transforms>

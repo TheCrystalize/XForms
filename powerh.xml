@@ -21,7 +21,7 @@
 			<![CDATA[
 				let
 					r = exp(p_in.y) * weight
-					a = atan2(p_in.x, p_in.y)
+					a = atan2(p_in.y, p_in.x)
 					powh = vec2(cos(a), sin(a)) * r
 				in
 					vec2(if unit_rnd_0 < 0.5 then powh.x else -powh.x, if unit_rnd_0 < 0.5 then -powh.y else powh.y)

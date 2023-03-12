@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="designed17">
+		<node name="input_params">
+			<real name="designed17">1</real>
+			<real name="fill" minval="0" maxval="0.005">0</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="fill" />
+		</node>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				designed17_init_result(designed17, fill)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					r = 1 / length(p_in)
+					s = sin(length(p_in) + log(abs(p_in.y * p_in.x)))
+					t = tan(p_in.x) * fract(tan(abs(if r > s then p_in.y else p_in.x * p_in.y))) * s
+					u = sin(length(p_in) + abs(p_in.y / p_in.x)) * tan(fract(abs(p_in.x)))
+					z = (if s > r then t else u) / s / (length(p_in) / 2.0) * tan(p_in.y)
+					con1 = abs(z) < r
+					con2 = abs(z) > r
+				in
+					(if if fill > 0.0 then con1 else con2 then p_in else vec2(0.0)) * weight
+			]]>
+		</string>
+	</transform_def>
+
+
+</user_transforms>

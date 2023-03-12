@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="poincare_q_inf">
+		<node name="input_params">
+			<real name="poincare_q_inf">1</real>
+			<real name="poincare_q_inf_p">3</real>
+			<real name="poincare_q_inf_x"minval="0.0"maxval="1.0">0</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="p" />
+			<real name="x" />
+		</node>
+
+		<int name="num_unit_randoms">1</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				let
+					p = (1.0 / sqrt(square(sin(pi() / 2.0 + 0.0)) / square(sin(pi() / poincare_q_inf_p)) - 1.0)) * (sin(pi() / 2.0 + 0.0) / sin(pi() / poincare_q_inf_p) - 1.0)
+				in
+					poincare_q_inf_init_result(poincare_q_inf, p, poincare_q_inf_x)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					z = complex(p_in.x, p_in.y)
+					m = if(x == 0.0, (z + p) / (z * -p + 1.0), (z - p) / (z * p + 1.0))
+				in
+					toVec2(m) * weight
+			]]>
+		</string>
+	</transform_def>
+
+
+</user_transforms>

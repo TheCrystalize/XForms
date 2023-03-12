@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="linkB_ultra_strip">
+		<node name="input_params">
+			<real name="ultra_strip" minval="0.0">1</real>
+			<real name="ultra_strip_cyl_length">5</real>
+			<real name="ultra_strip_cyl_width" minval="0.0" maxval="0.95">0.05</real>
+			<real name="ultra_strip_cyl_blur_strength">1</real>
+			<real name="ultra_strip_inside_rotate">2</real>
+			<real name="ultra_strip_inside_size">1</real>
+			<real name="ultra_strip_inside_switch" minval="0.0" maxval="1.0">0</real>
+			<real name="ultra_strip_inside_strength" minval="0.5">1</real>
+			<real name="ultra_strip_inner_weight" minval="0.0" maxval="1.0">0.9</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="cl" />
+			<real name="cw" />
+			<real name="clbs" />
+			<real name="atr" />
+			<real name="size" />
+			<real name="iswitch" />
+			<real name="strength" />
+			<real name="iw2" />
+		</node>
+
+		<int name="num_unit_randoms">9</int>
+		<int name="num_gauss_randoms">2</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				linkB_ultra_strip_init_result(ultra_strip, ultra_strip_cyl_length * 10,
+					ultra_strip_cyl_width - 0.05, ultra_strip_cyl_blur_strength,
+					ultra_strip_inside_rotate * quartpi(), ultra_strip_inside_size, ultra_strip_inside_switch,
+					ultra_strip_inside_strength, ultra_strip_inner_weight)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					rotm = mat2x2(
+						cos(atr), -sin(atr),
+						sin(atr), cos(atr))
+					atin = rotm * p_in * size
+					tmp = dot(atin, atin) + size
+					z = complex(atin.x, atin.y)
+					z1 = 1.0 / z
+					resulta = halfinvpi() * log((z + 1.0) / (-z + 1.0))
+					resultb = invpi() * log(z + sqrt(z * z + 1.0))
+					resultc = halfinvpi() * log(z1 + sqrt(z1 + 1.0) * sqrt(z1 - 1.0))
+					resultd = halfinvpi() * log((z * tmp) + (z * tmp))
+					epolar = vec2(resultd.im, resultd.re)
+					cpx = clamp(epolar.x, -0.5, 0.5)
+					cpy = clamp(epolar.y, 0.0, 0.5)
+					a1 = unit_rnd_8 * twopi()
+					s1 = gauss_rnd_1 * size
+					gauss = vec2(cos(a1), sin(a1)) * s1 + (atin / size)
+					arctanh = vec2(resulta.im, resulta.re)
+					arcsinh = vec2(resultb.im, resultb.re)
+					arcsech = lerp(vec2(resultc.im, resultc.re), vec2(-resultc.im, -resultc.re), if unit_rnd_6 <= 0.5
+																																											then 0.0
+																																											else 1.0)
+					rpolar = lerp(vec2(cpx, cpy), vec2(-cpx, -cpy), if unit_rnd_7 >= 0.5 then 1.0 else 0.0)
+					cylinder = vec2(gauss.x / sqrt(gauss.x * gauss.x + 1.0), gauss.y * strength) * 0.5
+					inside = if iswitch <= 0.0
+									then arctanh
+									else if iswitch <= 0.25
+												then arcsinh
+												else if iswitch <= 0.5
+															then arcsech
+															else if iswitch <= 0.75
+																		then rpolar
+																		else cylinder
+
+					cinx = clamp(inside.x, -0.5, 0.5)
+					ciny = clamp(inside.y, -0.5, 0.5)
+					log_out = (if iswitch > 0.75 then cylinder else vec2(ciny, cinx + floor(log(unit_rnd_0) * (if unit_rnd_1 < 0.5
+																															then strength
+																															else -strength) + 0.5))) * (weight * (1.8 - (cw * 2)))
+
+					a = unit_rnd_2 * twopi()
+					s = sqrt(abs(gauss_rnd_0)) * clbs
+					g = vec2(cos(a), sin(a)) * s + p_in
+					cyl1 = vec2((g.x * (1.0 + (cw * (halfinvpi() * 10.0 * fourpi())))) / sqrt(g.x * g.x + 1.0) - 19.0, g.y * (1.0 + cl)) * (weight * 0.05)
+					cyl2 = vec2((g.x * (1.0 + (cw * (halfinvpi() * 10.0 * fourpi())))) / sqrt(g.x * g.x + 1.0) + 19.0, g.y * (1.0 + cl)) * (weight * 0.05)
+				in
+					lerp(log_out, lerp(cyl1, cyl2, if unit_rnd_4 >= 0.5
+																					then 1.0
+																					else 0.0), if unit_rnd_5 >= iw2
+																											then 1.0
+																											else 0.0)
+			]]>
+		</string>
+	</transform_def>
+</user_transforms>

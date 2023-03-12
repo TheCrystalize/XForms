@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="dualParabola">
+		<node name="input_params">
+			<real name="dualParabola">1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="scale" />
+		</node>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				dualParabola_init_result(dualParabola)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					z = dual(p_in)
+				in
+					toVec2(z * z) * scale
+			]]>
+		</string>
+	</transform_def>
+
+
+</user_transforms>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="imperfectPolygons">
+		<node name="input_params">
+			<real name="imperfectPolygons">1</real>
+			<real name="imperfectPolygons_n">3</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="scale" />
+			<real name="n" />
+			<real name="tpn" />
+			<real name="ps" />
+		</node>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				let
+					n = imperfectPolygons_n
+				in
+					imperfectPolygons_init_result(imperfectPolygons, n, twopi() / n, 1 - 2 / n)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					passer = mat3x3(p_in.x, p_in.y, 0, 0, tpn, n, 0, ps, 0)
+					iter0 = imperfectPolygonIter(passer, 0)
+					z = iterate(imperfectPolygonIter, passer)
+				in
+					vec2(-z.e2, -z.e3) * scale
+			]]>
+		</string>
+	</transform_def>
+
+
+</user_transforms>

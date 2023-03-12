@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="hyperbolicAxialInv">
+		<node name="input_params">
+			<real name="hyperbolicAxialPolar">1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+		</node>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				hyperbolicAxialPolar_init_result(hyperbolicAxialPolar)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					f = sqrt(square(tanh(p_in.x)) + square(tanh(p_in.y)))
+					r = atanh(f)
+					a = 2 * atan2(tanh(p_in.y), tanh(p_in.x) + f)
+				in
+					vec2(cos(a), sin(a)) * r * weight
+			]]>
+		</string>
+	</transform_def>
+
+
+</user_transforms>

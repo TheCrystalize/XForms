@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="plastic">
+		<node name="input_params">
+			<real name="plastic">1</real>
+			<real name="holeSize">1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="hole" />
+		</node>
+
+		<int name="num_unit_randoms">2</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				plastic_init_result(plastic, holeSize)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					eyeFish = complex(p_in.x, -p_in.y) * (hole * 0.5 / (length(p_in) + 1))
+					circInv = complex(p_in.x, -p_in.y) / dot(p_in, p_in)
+				in
+					toVec2(circInv + eyeFish) * weight
+			]]>
+		</string>
+	</transform_def>
+
+
+</user_transforms>
