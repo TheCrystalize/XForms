@@ -1,0 +1,127 @@
+#------------------------------ Crystalize ------------------------------
+
+def epsilon() real : 0.000000000000000001
+
+def square(double x) double : x * x
+
+def modulo(double x, double y) double :
+	let
+		d = x / y
+	in
+		d - floor(d)
+
+def exclusiveOr(bool a, bool b) bool : (a && !b) || (b && !a)
+
+def jgrid(vec4 v, int i) tuple<vec4, bool> :
+	if (i > 20 || i > truncateToInt(v.w))
+		let
+		in
+			(v, false)
+	else
+		let
+			nr = if(hash_shadertoy(v.x, v.y, toReal(i + 1) * v.z) > 0.5, 0.0, pi())
+			dre = v.x - 1.0
+			nre = v.x + 1.0
+			vy2 = v.y * v.y
+			ir = 1.0 / (dre * dre + vy2)
+			m = vec2(nre * dre + vy2, v.y * dre - v.y * nre) * ir
+			r = exp(0.25 * log(dot(m, m)))
+			a = 0.5 * atan2(m.x, m.y) + nr
+			f = vec2(cos(a), sin(a)) * r
+		in
+			(vec4(f.x, f.y, v.z, v.w), true)
+
+def mbit(vec4 cz, int i) tuple<vec4, bool> :
+	if i > 100
+		let
+		in
+			(cz, false)
+	else
+		let
+			c = complex(cz.x, cz.y)
+			z = complex(cz.z, cz.w)
+			m = z * z + c
+			ncz = vec4(cz.x, cz.y, m.re, m.im)
+		in
+			(ncz, true)
+
+def find(mat3x3 v, int i) tuple<mat3x3, bool> :
+	if i > 0 || i > truncateToInt(e8(v))
+		let
+		in
+			(v, false)
+	else
+		let
+			a = e0(v)
+			b = e1(v)
+			c = e2(v)
+			x0 = toReal(-i)
+			x = x0 - (a * x0 + b * sin(x0) + c) / (a + b * cos(x0))
+			nv = if(abs(x0 - x) < epsilon(),
+				mat3x3(a, b, c,
+					x0, x, e5(v),
+					e6(v), e7(v), toReal(i - 1)),
+				mat3x3(a, b, c,
+					x0, x, e5(v),
+					e6(v), e7(v), toReal(i)))
+		in
+			(nv, true)
+
+def minkit(mat3x3 m3, int i) tuple<mat3x3, bool> :
+	if i < 20
+		let
+		in
+			(m3, false)
+	else
+		let
+			d = e6(m3) * 0.5
+			m = e0(m3) + e2(m3)
+			n = e1(m3) + e3(m3)
+			nm3 = if(e8(m3) < (m / n),
+				mat3x3(e0(m3), e1(m3), m, n, e4(m3), e5(m3), e6(m3), e7(m3), e8(m3)),
+				mat3x3(m, n, e2(m3), e3(m3), e4(m3), e5(m3), e6(m3), e7(m3) + d, e8(m3)))
+		in
+			(nm3, true)
+
+def minkowski(double x) double :
+	let
+		m3 = mat3x3(0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, x)
+		m0 = minkit(m3, 0)
+		nx = iterate(minkit, m3)
+	in
+		e7(nx) + e6(nx)
+
+def minkosine(double x, int awv) double :
+	let
+		lp = modulo(abs(x), 4.0)
+		p = modulo(abs(x), 2.0)
+		np = if(p > 1.0, 2.0 - p, p)
+		mink = if(awv > 0, minkowski(p) - p, minkowski(p))
+	in
+		if(exclusiveOr(lp < 2.0, x > 0.0), mink, -mink)
+
+def minkocosine(double x, int awv) double :
+	minkosine(x - 1.0, awv)
+
+def rosoni(mat4x4 v, int i) tuple<mat4x4, bool> :
+	if (i > 1024) || (i > truncateToInt(v.e8))
+		let
+		in
+			(v, false)
+	else
+		let
+			r2 = if (v.e10 == 0.0) then if (v.e12 < 0.0)
+					then max(abs(v.e0 - v.e13), abs(v.e1 - v.e14)) + v.e12
+					else square(v.e0 - v.e13) + square(v.e1 - v.e14) - square(v.e12)
+				else if (v.e12 < 0.0)
+					then abs(atan2(v.e1 - v.e14, v.e0 - v.e13)) * pi() + v.e12
+					else if(v.e0 - v.e13 < 0.0, -(v.e0 - v.e13), square(v.e1 - v.e14) - square(v.e0 - v.e13) * (square(v.e12) - square(v.e1 - v.e13)))
+			cerc2 = if(r2 <= 0.0, 1.0, 0.0)
+			sweetx = if(toReal(i) == v.e9, v.e0, v.e4)
+			sweety = if(toReal(i) == v.e9, v.e1, v.e5)
+			nv = mat4x4(v.e0 * v.e4 - v.e1 * v.e5, v.e1 * v.e5 + v.e0 * v.e4, v.e2, v.e3,
+					v.e4, v.e5, sweetx, sweety,
+					v.e8, v.e9, v.e10, v.e11,
+					v.e12, v.e13, v.e14, cerc2)
+		in
+			(nv, true)

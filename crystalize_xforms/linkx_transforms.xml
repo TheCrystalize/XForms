@@ -1,0 +1,1646 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="linkA_grand_outside">
+		<node name="input_params">
+			<real name="le_grand_julien">1</real>
+			<real name="le_grand_julien_inside_ring" minval="0.0" maxval="1.0">0.0</real>
+			<real name="le_grand_julien_inside_power">2</real>
+			<real name="le_grand_julien_inside_dist">1</real>
+			<real name="le_grand_julien_inside_size" minval="0.0">0.5</real>
+			<real name="le_grand_julien_inside_adjust">0.0</real>
+			<real name="le_grand_julien_outside_ring" minval="0.0">0.2</real>
+			<real name="le_grand_julien_outside_power">3</real>
+			<real name="le_grand_julien_outside_dist">-1</real>
+			<real name="le_grand_julien_outside_size">1.5</real>
+			<real name="le_grand_julien_outside_adjust">1.0</real>
+			<real name="le_grand_julien_a">1</real>
+			<real name="le_grand_julien_b">0</real>
+			<real name="le_grand_julien_c">0</real>
+			<real name="le_grand_julien_d">1</real>
+			<real name="le_grand_julien_e">0</real>
+			<real name="le_grand_julien_f">0</real>
+			<real name="le_grand_julien_inner_weight1" minval="0.0" maxval="1.0">0.5</real>
+			<real name="le_grand_julien_inner_weight2" minval="0.0" maxval="1.0">0.1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="iring" />
+			<real name="ipower" />
+			<real name="idist" />
+			<real name="isize" />
+			<real name="iadjust" />
+			<real name="oring" />
+			<real name="opower" />
+			<real name="odist" />
+			<real name="osize" />
+			<real name="oadjust" />
+			<real name="a" />
+			<real name="b" />
+			<real name="c" />
+			<real name="d" />
+			<real name="e" />
+			<real name="f" />
+			<real name="iw1" />
+			<real name="iw2" />
+		</node>
+
+		<int name="num_unit_randoms">11</int>
+		<int name="num_gauss_randoms">1</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				linkA_grand_outside_init_result(le_grand_julien, le_grand_julien_inside_ring, le_grand_julien_inside_power, le_grand_julien_inside_dist / le_grand_julien_inside_power * 0.5, le_grand_julien_inside_size, le_grand_julien_inside_adjust,
+					le_grand_julien_outside_ring, le_grand_julien_outside_power, le_grand_julien_outside_dist / le_grand_julien_outside_power * 0.5, le_grand_julien_outside_size, le_grand_julien_outside_adjust, le_grand_julien_a, le_grand_julien_b, le_grand_julien_c,
+					le_grand_julien_d, le_grand_julien_e, le_grand_julien_f, le_grand_julien_inner_weight1, le_grand_julien_inner_weight2)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					rosize = osize - oring
+					risize = if isize - iring >= 0.0
+										then if isize - iring >= rosize
+													then rosize
+													else isize - iring
+										else 0.0
+					misize = if isize >= rosize
+										then rosize
+										else isize
+
+					rooti = truncateToInt(ipower * unit_rnd_0)
+					ai = (atan2(p_in.y, p_in.x) + toReal(rooti) * twopi()) / ipower
+					ri = (((isize + osize) / 2) + iadjust) * pow(dot(p_in, p_in), idist)
+
+					x = a * p_in.x + b * p_in.y + e
+					y = c * p_in.x + d * p_in.y + f
+					rooto = truncateToInt(opower * unit_rnd_1)
+					ao = (atan2(y, x) + toReal(rooto) * twopi()) / opower
+					ro = (osize + oadjust) * pow(x * x + y * y, odist)
+
+					ijulian = vec2(cos(ai), sin(ai)) * ri
+					ojulian = vec2(cos(ao), sin(ao)) * ro
+
+					ir_min = min(rosize, misize)
+					ir_max = max(rosize, misize)
+					irad = length(ijulian)
+					iang = atan2(ijulian.y, ijulian.x)
+					is = sin(iang)
+					ic = cos(iang)
+					icrop = if irad > ir_max || irad < ir_min
+									then if 1.0 == 1.0
+											then vec2(0.0, 0.0)
+											else vec2(ic, is) * (ir_max)
+									else ijulian
+
+					or_min = min(osize, 10000000)
+					or_max = max(osize, 10000000)
+					orad = length(ojulian)
+					oang = atan2(ojulian.y, ojulian.x)
+					os = sin(oang)
+					oc = cos(oang)
+					ocrop = if orad > or_max || orad < or_min
+									then if 1.0 == 1.0
+											then vec2(0.0, 0.0)
+											else vec2(oc, os) * (or_max)
+									else ojulian
+
+					blrad = osize * sqrt(unit_rnd_8)
+					bangle = unit_rnd_9 * twopi()
+					blur = vec2(cos(bangle), sin(bangle)) * blrad
+
+					bir_min = min(misize, risize)
+					bir_max = max(misize, risize)
+					brad = length(blur)
+					bang = atan2(blur.y, blur.x)
+					bs = sin(bang)
+					bc = cos(bang)
+					bicrop = if brad > bir_max || brad < bir_min
+										then if 1.0 == 1.0
+													then vec2(0.0, 0.0)
+													else vec2(bc, bs) * (bir_max)
+										else blur
+
+					bor_min = min(rosize, osize)
+					bor_max = max(rosize, osize)
+					bocrop = if brad > bor_max || brad < bor_min
+										then if 1.0 == 1.0
+													then vec2(0.0, 0.0)
+													else vec2(bc, bs) * (bor_max)
+										else blur
+					iocrop = if unit_rnd_4 <= iw1 then icrop else ocrop
+					biocrop = if unit_rnd_5 <= 0.5 then bicrop else bocrop
+				in
+					(if unit_rnd_10 <= iw2 then iocrop else biocrop) * weight
+			]]>
+		</string>
+	</transform_def>
+	<transform_def name="linkA_radial_outside">
+		<node name="input_params">
+			<real name="radial_outside">1</real>
+			<real name="radial_outside_power">1</real>
+			<real name="radial_outside_dist">1</real>
+			<real name="radial_outside_switch" minval="0" maxval="0.05">0</real>
+			<real name="radial_outside_hole" minval="0">1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="power" />
+			<real name="dist" />
+			<real name="switch" />
+			<real name="hole" />
+		</node>
+
+		<int name="num_unit_randoms">4</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				linkA_radial_outside_init_result(radial_outside, radial_outside_power, radial_outside_dist / radial_outside_power * 0.5, radial_outside_switch, radial_outside_hole)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					root = truncateToInt(power * unit_rnd_0)
+					ja = (atan2(p_in.y, p_in.x) + toReal(root) * twopi()) / power
+					jr = pow(dot(p_in, p_in), dist)
+					julian = vec2(cos(ja), sin(ja)) * jr
+
+					r = length(julian)
+					a = atan2(julian.y, julian.x) * (1 / sign(floor(dot(julian * hole, julian * hole))))
+					ccrop = (vec2(cos(a), sin(a)) * r)
+
+					plastic = julian + (normalise(julian) * hole)
+				in
+					(if switch == 0.0 then ccrop else plastic) * weight
+			]]>
+		</string>
+	</transform_def>
+	<transform_def name="linkA_split_interest">
+		<node name="input_params">
+			<real name="split_interest" minval="0.0">1</real>
+			<real name="split_interest_split">0</real>
+			<real name="split_interest_spread">0</real>
+			<real name="split_interest_symmetry_type" minval="0.0" maxval="0.05">0</real>
+			<real name="split_interest_interest_type" minval="0.0" maxval="0.5">0</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="split" />
+			<real name="spread" />
+			<real name="syty" />
+			<real name="inty" />
+		</node>
+
+		<int name="num_unit_randoms">2</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				linkA_split_interest_init_result(split_interest, split_interest_split, split_interest * (split_interest_spread + 2), split_interest_symmetry_type, split_interest_interest_type)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					x_plus_weight = p_in.x + weight
+					x_less_weight = p_in.x - weight
+					num = x_plus_weight * x_plus_weight + p_in.y * p_in.y
+					den = x_less_weight * x_less_weight + p_in.y * p_in.y
+					a = (atan2(p_in.y, x_less_weight) - atan2(p_in.y, x_plus_weight)) * 0.5
+					r = spread * sqrt(sqrt(num / den))
+					fluxa = vec2(cos(a), sin(a)) * r
+					fluxb = vec2(-cos(a), if syty == 0.0 then -sin(a) else sin(a)) * r
+					rflux = if unit_rnd_0 >= 0.5 then fluxa else fluxb
+
+					d = dot(p_in, p_in)
+					r_avg = weight * sqrt(1 + 4 * p_in.x / (d - spread * p_in.x + 1.0))
+					a_avg = 0.5 * atan2(spread * p_in.y, (d - 1))
+					deltaa = vec2(cos(a_avg), sin(a_avg)) * r_avg
+					deltab = vec2(-cos(a_avg), if syty == 0.0 then -sin(a_avg) else sin(a_avg)) * r_avg
+					rdelta = if unit_rnd_0 >= 0.5 then deltaa else deltab
+
+					r2 = length(p_in)
+					a2 = atan2(p_in.y, p_in.x) + (spread - 2.0) * r2
+					c2 = floor(a2 * halfinvpi() + 0.5)
+					alpha = a2 * 0.5 + c2 * pi()
+					wedgea = vec2(cos(alpha), sin(alpha)) * (r2 * weight)
+					wedgeb = vec2(-cos(alpha), if syty == 0.0 then -sin(alpha) else sin(alpha)) * (r2 * weight)
+					rwedge = if unit_rnd_0 >= 0.5 then wedgea else wedgeb
+
+					interest = if inty == 0.0 then rflux else if inty == 0.5 then rwedge else rdelta
+					x_offset = if interest.x >= 0 then split else -split
+				in
+					interest + vec2(x_offset, 0.0)
+			]]>
+		</string>
+	</transform_def>
+	<transform_def name="linkB_perfect_circle">
+		<node name="input_params">
+			<real name="perfect_circle">1</real>
+			<real name="perfect_circle_ring" minval="0.0" maxval="1.0">0.1</real>
+			<real name="perfect_circle_switch" minval="0.0" maxval="1.0">0.0</real>
+			<real name="perfect_circle_mod">0.0</real>
+			<real name="perfect_circle_inner_weight" minval="0.0" maxval="1.0">0.1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="ring" />
+			<real name="switch" />
+			<real name="mod" />
+			<real name="iw" />
+		</node>
+
+		<int name="num_unit_randoms">7</int>
+		<int name="num_gauss_randoms">1</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				linkB_perfect_circle_init_result(perfect_circle, perfect_circle_ring, perfect_circle_switch, perfect_circle_mod, perfect_circle_inner_weight)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					rring = 1.0 - ring
+
+					ga = unit_rnd_0 * twopi()
+					gs = gauss_rnd_0 * mod
+					gauss = vec2(cos(ga), sin(ga)) * gs + p_in
+					hemisphere = gauss * (1.0 / sqrt(dot(gauss, gauss) + 1))
+
+					sa = unit_rnd_2 * twopi()
+					su = unit_rnd_3
+					sr = if mod == 1
+							then acos(su * 2 - 1)
+							else acos(exp(log(1 - su) * mod) * 2 - 1)
+					sm = sr * invpi()
+					sineblur = vec2(cos(sa), sin(sa)) * sm
+
+					rad = length(p_in)
+					ang = atan2(p_in.y, p_in.x) + log(rad) * mod
+					swirl = vec2(cos(ang), sin(ang)) * rad
+					z = complex(swirl.x, swirl.y)
+					z1 = 1.0 / z
+					resulta = invpi() * log((z + 1.0) / (-z + 1.0))
+					arctanh = vec2(resulta.re, resulta.im)
+					resultb = twoinvpi() * log(z + sqrt(z * z + 1.0))
+					arcsinh = vec2(resultb.re, resultb.im)
+					resultc = invpi() * log(z + sqrt(z + 1.0) * sqrt(z - 1.0))
+					arcsech = if unit_rnd_1 >= 0.5 then vec2(resultc.re, resultc.im) else vec2(-resultc.re, -resultc.im)
+					rswitch = (if switch <= 0.0
+										then swirl
+										else if switch <= 0.2
+													then hemisphere
+													else if switch <= 0.4
+																then sineblur
+																else if switch <= 0.6
+																			then arctanh
+																			else if switch <= 0.8
+																						then arcsinh
+																						else arcsech) * rring
+
+					imin = min(0.0, rring)
+					imax = max(0.0, rring)
+					irad = length(rswitch)
+					iang = atan2(rswitch.y, rswitch.x)
+					is = sin(iang)
+					ic = cos(iang)
+					inside = if irad > imax || irad < imin
+									then if 1.0 == 1.0
+												then vec2(0.0, 0.0)
+												else vec2(ic, is) * (imax)
+									else rswitch
+
+					br = unit_rnd_4
+					ba = unit_rnd_5 * twopi()
+					blur = vec2(cos(ba), sin(ba)) * br
+					bmin = min(rring, 1.0)
+					bmax = max(rring, 1.0)
+					rrad = length(blur)
+					rang = atan2(blur.y, blur.x)
+					rs = sin(rang)
+					rc = cos(rang)
+					ring = if rrad > bmax || rrad < bmin
+									then if 1.0 == 1.0
+												then vec2(0.0, 0.0)
+												else vec2(rc, rs) * (bmax)
+									else blur
+
+					total = if unit_rnd_6 <= iw then ring else inside
+				in
+					total * weight
+			]]>
+		</string>
+	</transform_def>
+	<transform_def name="linkB_ultra_strip">
+		<node name="input_params">
+			<real name="ultra_strip" minval="0.0">1</real>
+			<real name="ultra_strip_cyl_length">5</real>
+			<real name="ultra_strip_cyl_width" minval="0.0" maxval="0.95">0.05</real>
+			<real name="ultra_strip_cyl_blur_strength">1</real>
+			<real name="ultra_strip_inside_rotate">2</real>
+			<real name="ultra_strip_inside_size">1</real>
+			<real name="ultra_strip_inside_switch" minval="0.0" maxval="1.0">0</real>
+			<real name="ultra_strip_inside_strength" minval="0.5">1</real>
+			<real name="ultra_strip_inner_weight" minval="0.0" maxval="1.0">0.9</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="cl" />
+			<real name="cw" />
+			<real name="clbs" />
+			<real name="atr" />
+			<real name="size" />
+			<real name="iswitch" />
+			<real name="strength" />
+			<real name="iw2" />
+		</node>
+
+		<int name="num_unit_randoms">9</int>
+		<int name="num_gauss_randoms">2</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				linkB_ultra_strip_init_result(ultra_strip, ultra_strip_cyl_length * 10,
+					ultra_strip_cyl_width - 0.05, ultra_strip_cyl_blur_strength,
+					ultra_strip_inside_rotate * quartpi(), ultra_strip_inside_size, ultra_strip_inside_switch,
+					ultra_strip_inside_strength, ultra_strip_inner_weight)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					rotm = mat2x2(
+						cos(atr), -sin(atr),
+						sin(atr), cos(atr))
+					atin = rotm * p_in * size
+					tmp = dot(atin, atin) + size
+					z = complex(atin.x, atin.y)
+					z1 = 1.0 / z
+					resulta = halfinvpi() * log((z + 1.0) / (-z + 1.0))
+					resultb = invpi() * log(z + sqrt(z * z + 1.0))
+					resultc = halfinvpi() * log(z1 + sqrt(z1 + 1.0) * sqrt(z1 - 1.0))
+					resultd = halfinvpi() * log((z * tmp) + (z * tmp))
+					epolar = vec2(resultd.im, resultd.re)
+					cpx = clamp(epolar.x, -0.5, 0.5)
+					cpy = clamp(epolar.y, 0.0, 0.5)
+					a1 = unit_rnd_8 * twopi()
+					s1 = gauss_rnd_1 * size
+					gauss = vec2(cos(a1), sin(a1)) * s1 + (atin / size)
+					arctanh = vec2(resulta.im, resulta.re)
+					arcsinh = vec2(resultb.im, resultb.re)
+					arcsech = lerp(vec2(resultc.im, resultc.re), vec2(-resultc.im, -resultc.re), if unit_rnd_6 <= 0.5
+																																											then 0.0
+																																											else 1.0)
+					rpolar = lerp(vec2(cpx, cpy), vec2(-cpx, -cpy), if unit_rnd_7 >= 0.5 then 1.0 else 0.0)
+					cylinder = vec2(gauss.x / sqrt(gauss.x * gauss.x + 1.0), gauss.y * strength) * 0.5
+					inside = if iswitch <= 0.0
+									then arctanh
+									else if iswitch <= 0.25
+												then arcsinh
+												else if iswitch <= 0.5
+															then arcsech
+															else if iswitch <= 0.75
+																		then rpolar
+																		else cylinder
+
+					cinx = clamp(inside.x, -0.5, 0.5)
+					ciny = clamp(inside.y, -0.5, 0.5)
+					log_out = (if iswitch > 0.75 then cylinder else vec2(ciny, cinx + floor(log(unit_rnd_0) * (if unit_rnd_1 < 0.5
+																															then strength
+																															else -strength) + 0.5))) * (weight * (1.8 - (cw * 2)))
+
+					a = unit_rnd_2 * twopi()
+					s = sqrt(abs(gauss_rnd_0)) * clbs
+					g = vec2(cos(a), sin(a)) * s + p_in
+					cyl1 = vec2((g.x * (1.0 + (cw * (halfinvpi() * 10.0 * fourpi())))) / sqrt(g.x * g.x + 1.0) - 19.0, g.y * (1.0 + cl)) * (weight * 0.05)
+					cyl2 = vec2((g.x * (1.0 + (cw * (halfinvpi() * 10.0 * fourpi())))) / sqrt(g.x * g.x + 1.0) + 19.0, g.y * (1.0 + cl)) * (weight * 0.05)
+				in
+					lerp(log_out, lerp(cyl1, cyl2, if unit_rnd_4 >= 0.5
+																					then 1.0
+																					else 0.0), if unit_rnd_5 >= iw2
+																											then 1.0
+																											else 0.0)
+			]]>
+		</string>
+	</transform_def>
+	<transform_def name="linkX_bars_for_days">
+		<node name="input_params">
+			<real name="bars_for_days">1</real>
+			<real name="bars_for_days_inside_size" minval="0.0">1</real>
+			<real name="bars_for_days_inside_ring" minval="0.0" maxval="1.0">0.05</real>
+			<real name="bars_for_days_fill_rotation">0</real>
+			<real name="bars_for_days_fill_size" minval="0.0">1</real>
+			<real name="bars_for_days_fill_switch" minval="0.0" maxval="1.0">1</real>
+			<real name="bars_for_days_right_rotation">0</real>
+			<real name="bars_for_days_right_size">1</real>
+			<real name="bars_for_days_right_power">1</real>
+			<real name="bars_for_days_right_dist">1</real>
+			<real name="bars_for_days_left_rotation">0</real>
+			<real name="bars_for_days_left_size">1</real>
+			<real name="bars_for_days_left_power">1</real>
+			<real name="bars_for_days_left_dist">1</real>
+			<real name="bars_for_days_interval" minval="-0.5" maxval="0.5">0.0</real>
+			<real name="bars_for_days_warp">0</real>
+			<real name="bars_for_days_inner_weight1" minval="0.0" maxval="1.0">0.5</real>
+			<real name="bars_for_days_inner_weight2" minval="0.0" maxval="1.0">0.5</real>
+			<real name="bars_for_days_inner_weight3" minval="0.0" maxval="1.0">0.5</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="isize" />
+			<real name="iring" />
+			<real name="frot" />
+			<real name="fsize" />
+			<real name="fswitch" />
+			<real name="rrot" />
+			<real name="rsize" />
+			<real name="rpow" />
+			<real name="rdist" />
+			<real name="lrot" />
+			<real name="lsize" />
+			<real name="lpow" />
+			<real name="ldist" />
+			<real name="space" />
+			<real name="warp" />
+			<real name="iw1" />
+			<real name="iw2" />
+			<real name="iw3" />
+		</node>
+
+		<int name="num_unit_randoms">11</int>
+		<int name="num_gauss_randoms">1</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				linkX_bars_for_days_init_result(bars_for_days, bars_for_days_inside_size, bars_for_days_inside_ring, bars_for_days_fill_rotation * quartpi(), bars_for_days_fill_size, bars_for_days_fill_switch,
+				  bars_for_days_right_rotation * quartpi(), bars_for_days_right_size, bars_for_days_right_power, bars_for_days_right_dist / bars_for_days_right_power * 0.5,
+					bars_for_days_left_rotation * quartpi(), bars_for_days_left_size, bars_for_days_left_power, bars_for_days_left_dist / bars_for_days_left_power * 0.5, bars_for_days_interval, bars_for_days_warp,
+					bars_for_days_inner_weight1, bars_for_days_inner_weight2, bars_for_days_inner_weight3)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					rotmr = mat2x2(cos(rrot), -sin(rrot),
+													sin(rrot), cos(rrot))
+					rin = rotmr * (p_in * rsize)
+					rootr = truncateToInt(rpow * unit_rnd_1)
+					ar = (atan2(rin.y, rin.x) + toReal(rootr) * twopi()) / rpow
+					rr = pow(dot(rin, rin), rdist)
+					julianr = vec2(cos(ar), sin(ar)) * rr
+
+					rotml = mat2x2(cos(lrot), -sin(lrot),
+													sin(lrot), cos(lrot))
+					lin = rotml * (p_in * lsize)
+					rootl = truncateToInt(lpow * unit_rnd_2)
+					al = (atan2(lin.y, lin.x) + toReal(rootl) * twopi()) / lpow
+					rl = pow(dot(lin, lin), ldist)
+					julianl = vec2(cos(al), sin(al)) * rl
+
+					roundxr = floor(julianr.x + 0.5)
+					offsetxr = julianr.x - roundxr
+
+					roundxl = floor(julianl.x + 0.5)
+					offsetxl = julianl.x - roundxl
+
+					stripesr = vec2((offsetxr * (0.5 - space) + roundxr) + 0.25, julianr.y + offsetxr * offsetxr * warp)
+					stripesl = vec2(-(offsetxl * (0.5 + space) + roundxl) - 0.25, -(julianl.y + offsetxl * offsetxl * warp))
+
+					bars = lerp(stripesr, stripesl, if unit_rnd_0 >= iw1 then 1.0 else 0.0)
+
+					bisize = if isize - iring > 0.0
+										then if isize - iring > isize
+													then isize
+													else isize - iring
+										else 0.0
+					misize = if isize > 0.0
+										then isize
+										else 0.0
+
+					brad = isize * sqrt(unit_rnd_3)
+					bangle = unit_rnd_4 * twopi()
+					blur = vec2(cos(bangle), sin(bangle)) * brad
+					brmin = min(bisize, misize)
+					brmax = max(bisize, misize)
+					bbrad = length(blur)
+					bang = atan2(blur.y, blur.x)
+					bs = sin(bang)
+					bc = cos(bang)
+					bring = if bbrad > brmax || bbrad < brmin
+									then if 1.0 == 1.0
+												then vec2(0.0, 0.0)
+												else vec2(bc, bs) * (brmax)
+									else blur
+
+					rotmf = mat2x2(cos(frot), -sin(frot),
+													sin(frot), cos(frot))
+					fin = rotmf * (p_in * fsize)
+
+					fa = unit_rnd_5 * twopi()
+					fs = gauss_rnd_0 * fsize
+					fgauss = vec2(cos(fa), sin(fa)) * fs + (fin / fsize)
+					hemisphere = fgauss * (sqrt(dot(fgauss, fgauss) + 1))
+
+					z = complex(fin.x, fin.y)
+					z1 = 1.0 / z
+					resulta = invpi() * log((z + 1.0) / (-z + 1.0))
+					resultb = weight * log(z + sqrt(z * z + 1.0))
+					resultc = invpi() * log(z1 + sqrt(z1 + 1.0) * sqrt(z1 - 1.0))
+					arctanh = vec2(resulta.re, resulta.im)
+					arcsinh = vec2(resultb.re, resultb.im)
+					arcsech = lerp(vec2(resultc.im, resultc.re), vec2(-resultc.im, -resultc.re), if unit_rnd_6 <= 0.5
+																																												then 0.0
+																																												else 1.0)
+					sba = unit_rnd_7 * twopi()
+					sbu = unit_rnd_8
+					sbr = if fsize == 1 then
+							acos(sbu * 2 - 1)
+						else
+							acos(exp(log(1 - sbu) * fsize) * 2 - 1)
+					sbm = sbr * invpi() 
+					sineblur = vec2(cos(sba), sin(sba)) * sbm
+
+					fill = (if fswitch <= 0.0
+									then hemisphere
+									else if fswitch <= 0.25
+												then arctanh
+												else if fswitch <= 0.5
+															then arcsinh
+															else if fswitch <= 0.75
+																		then arcsech
+																		else sineblur) * bisize
+					frmin = min(0.0, bisize)
+					frmax = max(0.0, bisize)
+					frad = length(fill)
+					fang = atan2(fill.y, fill.x)
+					fsn = sin(fang)
+					fc = cos(fang)
+					fcrop = if frad > frmax || frad < frmin
+									then if 1.0 == 1.0
+												then vec2(0.0, 0.0)
+												else vec2(fc, fsn) * (frmax)
+									else fill
+					inside = lerp(bring, fcrop, if unit_rnd_9 >= iw2 then 1.0 else 0.0)
+				in
+					lerp((bars + (normalise(bars) * isize)), inside, if unit_rnd_10 <= iw3 then 1.0 else 0.0) * weight
+			]]>
+		</string>
+	</transform_def>
+	<transform_def name="linkX_bOkay">
+		<node name="input_params">
+			<real name="bOkay">1</real>
+			<real name="bOkay_rotate1">0</real>
+			<real name="bOkay_rotate2">3.141592653589</real>
+			<real name="bOkay_power1" minval="1">1</real>
+			<real name="bOkay_power2" minval="1">2</real>
+			<real name="bOkay_move">0</real>
+			<real name="bOkay_split" minval="0.5">1</real>
+			<real name="bOkay_inner_weight">0.5</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="rotate1" />
+			<real name="rotate2" />
+			<real name="power1" />
+			<real name="power2" />
+			<real name="move" />
+			<real name="split" />
+			<real name="iw" />
+		</node>
+
+		<int name="num_unit_randoms">2</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				linkX_bOkay_init_result(bOkay, bOkay_rotate1, bOkay_rotate2, bOkay_power1, bOkay_power2, bOkay_move, bOkay_split, bOkay_inner_weight)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					taua = 0.5 * (log((p_in.x + 1.0) * (p_in.x + 1.0) + p_in.y * p_in.y) - log((p_in.x - 1.0) * (p_in.x - 1.0) + p_in.y * p_in.y)) / power1 + move
+					taub = 0.5 * (log((p_in.x + 1.0) * (p_in.x + 1.0) + p_in.y * p_in.y) - log((p_in.x - 1.0) * (p_in.x - 1.0) + p_in.y * p_in.y)) / power2 + move
+					sigmaa = pi() - atan2(2 * p_in.y, 1 - dot(p_in, p_in)) + rotate1
+					sigmab = pi() - atan2(2 * p_in.y, 1 - dot(p_in, p_in)) + rotate2
+					sigma2a = (sigmaa + twopi() * floor(unit_rnd_0 * power1)) / power1
+					sigma2b = (sigmab + twopi() * floor(unit_rnd_0 * power2)) / power2
+					tau2 = if p_in.x >= 0
+								then taua + split
+								else taua - split
+					tau3 = if p_in.x >= 0
+								then taub - split
+								else taub + split
+					b_out1 = vec2(sinh(tau2), sin(sigma2a)) * (weight / (cosh(tau2) - cos(sigma2a)))
+					b_out2 = vec2(sinh(tau3), sin(sigma2b)) * (weight / (cosh(tau3) - cos(sigma2b)))
+				in
+					lerp(b_out1, b_out2, if unit_rnd_1 >= iw
+																then 0.0
+																else 1.0)
+			]]>
+		</string>
+	</transform_def>
+	<transform_def name="linkX_circle_plus_fill">
+		<node name="input_params">
+			<real name="circle_plus_fill">1</real>
+			<real name="circle_plus_fill_zero" minval="0" maxval="1">0</real>
+			<real name="circle_plus_fill_hemi_gaussian">1</real>
+			<real name="circle_plus_fill_AT_rotate">1</real>
+			<real name="circle_plus_fill_hemi_AT_switch" minval="0" maxval="1">0</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="zero" />
+			<real name="g_power" />
+			<real name="atr" />
+			<real name="hatswitch" />
+		</node>
+
+		<int name="num_unit_randoms">3</int>
+		<int name="num_gauss_randoms">1</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				linkX_circle_plus_fill_init_result(circle_plus_fill, circle_plus_fill_zero, circle_plus_fill_hemi_gaussian, circle_plus_fill_AT_rotate * quartpi(), circle_plus_fill_hemi_AT_switch)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					cri = 1.0
+					cro = 10000000.0
+					r_min = min(cri, cro)
+					r_max = max(cri, cro)
+					rad = length(p_in)
+					ang = atan2(p_in.y, p_in.x)
+					s = sin(ang)
+					c = cos(ang)
+					crop_out = if rad > cro || rad < cri
+							then if zero == 0.0
+								then vec2(0.0, 0.0)
+								else vec2(c, s) * (cro * weight)
+							else p_in * weight
+
+					ur = unit_rnd_0 * twopi()
+					gr = gauss_rnd_0 * g_power
+					g = vec2(cos(ur), sin(ur)) * gr + p_in
+					hemi = g * (weight / sqrt(dot(g, g) + 1))
+
+					cri2 = 0.9
+					cro2 = 1.0
+					r_min2 = min(cri2, cro2)
+					r_max2 = max(cri2, cro2)
+					rad3 = length(hemi)
+					ang2 = atan2(hemi.y, hemi.x)
+					s3 = sin(ang2)
+					c3 = cos(ang2)
+					crop_out2 = if rad3 > cro2 || rad3 < cri2
+							then if zero == 0.0
+								then vec2(0.0, 0.0)
+								else vec2(c3, s3) * (cro2 * weight)
+							else hemi * weight
+
+
+					rotm = mat2x2(cos(atr), -sin(atr),
+							sin(atr), cos(atr))
+					at_in = rotm * p_in
+					z = complex(at_in.x, at_in.y)
+					result = (weight * invpi()) * log((z + 1.0) / (-z + 1.0))
+					cA = max(-1.0, min(0.0, 1.0))
+					xi = result.re
+					yi = result.im
+					w2 = weight * 0.9
+					rad2 = sqrt(xi * xi + yi * yi)
+					at_out = lerp(if rad2 > 1 then if zero == 0 then vec2(0.0, 0.0)
+							else let
+								ang2 = atan2(yi, xi)
+								rdc = 1 + (unit_rnd_0 * 0.5 * cA)
+								s2 = sin(ang2)
+								c2 = cos(ang2)
+							in
+								vec2(w2 * rdc * c2, w2 * rdc * s2)
+							else vec2(w2 * xi, w2 * yi), crop_out2, if unit_rnd_2 >= 0.9
+												then 1.0
+												else 0.0)
+				in
+					lerp(crop_out, (if hatswitch == 0.0
+								then at_out
+								else hemi), if unit_rnd_1 >= 0.75
+										then 1.0
+										else 0.0)
+			]]>
+		</string>
+	</transform_def>
+	<transform_def name="linkX_get_hexed">
+		<node name="input_params">
+			<real name="get_hexed">1</real>
+			<real name="get_hexed_size">1</real>
+			<real name="get_hexed_inner_weight" minval="0.0"maxval="1.0">.75</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="hsize" />
+			<real name="iw" />
+			<real name="rpow" />
+			<real name="alpha" />
+			<real name="alphaco" />
+			<real name="roundco" />
+			<real name="comp" />
+		</node>
+
+		<int name="num_unit_randoms">1</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				let
+					hsize = halfsqrt3() / get_hexed_size
+					rpow = max(6.0, 2.0)
+					alpha = twopi() / rpow
+					alphaco = tan(alpha * 0.5) * 2
+					roundco = 0.0 / sin(alpha * 0.5) / rpow * 2.0
+					comp = if 1.0 <= 0 then 0.0 else 1.0
+				in
+					linkX_get_hexed_init_result(get_hexed, hsize, get_hexed_inner_weight, rpow, alpha, alphaco, roundco, comp)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					XY0 = p_in * hsize
+					x = (0.57735026918962576450914878050196 * XY0.x - XY0.y / 3.0)
+					z = (2.0 * XY0.y / 3.0)
+					y = -x - z
+					rx = floor(x + 0.5)
+					ry = floor(y + 0.5)
+					rz = floor(z + 0.5)
+					x_diff = abs(rx - x)
+					y_diff = abs(ry - y)
+					z_diff = abs(rz - z)
+					r_final = if (x_diff > y_diff && x_diff > z_diff)
+										then vec3(-ry-rz, ry, rz)
+										else if (y_diff > z_diff)
+								 					then vec3(rx, -rx-rz, rz)
+								 					else vec3(rx, ry, -rx-ry)
+					FXY_h = vec2(sqrt3() * e0(r_final) + halfsqrt3() * e2(r_final), 1.5 * e2(r_final))
+					hm_out = (XY0 - FXY_h) * (weight / halfsqrt3())
+
+					rad = length(p_in)
+					ang = atan2(p_in.y, p_in.x)
+					s = sin(ang)
+					c = cos(ang)
+					crop_out = if rad > 10000000 || rad < 1.0
+											then if 1.0 == 1.0
+														then vec2(0.0, 0.0)
+														else vec2(c, s) * (10000000)
+											else p_in
+					dang = (atan2(crop_out.y, crop_out.x) + pi()) / alpha
+					rad2 = length(crop_out)
+					zang1 = toReal(floorToInt(dang))
+					xang1 = dang - zang1
+					xang2 = if xang1 > 0.5 then 1.0 - xang1 else xang1
+					zang = if xang1 > 0.5 then zang1 + 1.0 else zang1
+					sign = if xang1 > 0.5 then -1.0 else 1.0
+					xang = if comp == 1.0 && 1.0 >= 1.0
+									then atan(xang2 * alphaco) / alpha
+									else xang2
+					coeff_1 = if 1.0 == 0.0
+										then 1.0
+										else let
+											coeff0 = 1.0 / cos(xang * alpha)
+										in
+											if 0.0 != 0.0
+											then let
+												wwidth = if 1.0 != 1.0
+																	then exp(log(xang * 2.0) * 1.0) * roundco
+																	else xang * 2.0 * roundco
+											in
+												abs((1.0 - wwidth) * coeff0 + wwidth)
+											else coeff0
+					coeff = if (1.0) != 1.0
+									then exp(log(coeff_1) * 1.0)
+									else coeff_1
+					ang2 = (zang + sign * xang) * alpha - pi()
+					shape_out = vec2(cos(ang2), sin(ang2)) * (weight * coeff * rad2)
+				in
+					lerp(hm_out, shape_out, if unit_rnd_0 >= iw
+																	then 0.0
+																	else 1.0)
+			]]>
+		</string>
+	</transform_def>
+	<transform_def name="linkX_get_squared">
+		<node name="input_params">
+			<real name="get_squared">1</real>
+			<real name="get_squared_inside_rotate">0</real>
+			<real name="get_squared_inside_size">1</real>
+			<real name="get_squared_inside_switch" minval="0" maxval="1.0">0</real>
+			<real name="get_squared_outside_switch" minval="0" maxval="0.05">0</real>
+			<real name="get_squared_inner_weight" minval="0" maxval="1.0">0.5</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="isr" />
+			<real name="iss" />
+			<real name="iswitch" />
+			<real name="oswitch" />
+			<real name="iw" />
+		</node>
+
+		<int name="num_unit_randoms">3</int>
+		<int name="num_gauss_randoms">1</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				linkX_get_squared_init_result(get_squared, get_squared_inside_rotate * quartpi(), get_squared_inside_size, get_squared_inside_switch, get_squared_outside_switch, get_squared_inner_weight)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					scale = 1.0 / dot(p_in, p_in)
+					hole = (if oswitch == 0
+									then p_in
+									else p_in * scale) + normalise(p_in)
+					s = length(hole)
+					a1 = atan2(hole.y, hole.x)
+					a = if a1 < 0.0 then a1 + twopi() else a1
+					p = s * a * 1.2732395447351626861510701069801
+					square_out = if p <= s
+										then vec2(s, p)
+										else if p <= 3.0 * s
+													then vec2(2.0 * s - p, s)
+													else if p <= 5.0 * s
+																then vec2(-s, 4.0 * s - p)
+																else if p <= 7.0 * s
+																			then vec2(-6.0 * s + p, -s)
+																			else vec2(s, -8.0 * s + p)
+
+					rotm = mat2x2(cos(isr), -sin(isr),
+												sin(isr), cos(isr))
+					rlin = rotm * (p_in *  iss)
+
+					z = complex(rlin.x, rlin.y)
+					result = invpi() * log((z + 1.0) / (-z + 1.0))
+					arctanh = vec2(result.re, result.im)
+					result2 = twoinvpi() * log(z + sqrt(z * z + 1.0))
+					arcsinh = vec2(result2.re, result2.im)
+
+					b = unit_rnd_0 * twopi()
+					t = gauss_rnd_0 * iss
+					rgauss = vec2(cos(b), sin(b)) * t + rlin
+					sinusoidal = vec2(sin(rgauss.x), sin(rgauss.y))
+
+					r2 = dot(p_in, p_in)
+					squar = if r2 >1
+									then if unit_rnd_1 < 0.5
+												then rlin / r2
+												else rlin
+									else vec2(0.0, 0.0)
+
+					inside = if iswitch <= 0.0
+										then rlin
+										else if iswitch <= 0.25
+													then arctanh
+													else if iswitch <= 0.5
+																then arcsinh
+																else if iswitch <= 0.75
+																			then sinusoidal
+																			else squar
+					cinx = clamp(inside.x, -1.0, 1.0)
+					ciny = clamp(inside.y, -1.0, 1.0)
+					r_in = vec2(cinx, ciny)
+				in
+					lerp(square_out, r_in, if unit_rnd_2 >= iw
+					 												then 1.0
+																	else 0.0) * weight
+			]]>
+		</string>
+	</transform_def>
+	<transform_def name="linkX_le_grand_julien">
+		<node name="input_params">
+			<real name="le_grand_julien">1</real>
+			<real name="le_grand_julien_fill_rotate">1</real>
+			<real name="le_grand_julien_fill_size">1</real>
+			<real name="le_grand_julien_fill_switch" minval="0.0" maxval="1.0">0</real>
+			<real name="le_grand_julien_inside_ring" minval="0.0" maxval="1.0">0.1</real>
+			<real name="le_grand_julien_inside_power">2</real>
+			<real name="le_grand_julien_inside_dist">1</real>
+			<real name="le_grand_julien_inside_size" minval="0.0">0.5</real>
+			<real name="le_grand_julien_inside_adjust">0.0</real>
+			<real name="le_grand_julien_outside_ring" minval="0.0">0.2</real>
+			<real name="le_grand_julien_outside_power">3</real>
+			<real name="le_grand_julien_outside_dist">-1</real>
+			<real name="le_grand_julien_outside_size">1.5</real>
+			<real name="le_grand_julien_outside_adjust">1.0</real>
+			<real name="le_grand_julien_a">1</real>
+			<real name="le_grand_julien_b">0</real>
+			<real name="le_grand_julien_c">0</real>
+			<real name="le_grand_julien_d">1</real>
+			<real name="le_grand_julien_e">0</real>
+			<real name="le_grand_julien_f">0</real>
+			<real name="le_grand_julien_inner_weight1" minval="0.0" maxval="1.0">0.5</real>
+			<real name="le_grand_julien_inner_weight2" minval="0.0" maxval="1.0">0.1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="rot" />
+			<real name="fsize" />
+			<real name="fswitch" />
+			<real name="iring" />
+			<real name="ipower" />
+			<real name="idist" />
+			<real name="isize" />
+			<real name="iadjust" />
+			<real name="oring" />
+			<real name="opower" />
+			<real name="odist" />
+			<real name="osize" />
+			<real name="oadjust" />
+			<real name="a" />
+			<real name="b" />
+			<real name="c" />
+			<real name="d" />
+			<real name="e" />
+			<real name="f" />
+			<real name="iw1" />
+			<real name="iw2" />
+		</node>
+
+		<int name="num_unit_randoms">12</int>
+		<int name="num_gauss_randoms">1</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				linkX_le_grand_julien_init_result(le_grand_julien, le_grand_julien_fill_rotate, le_grand_julien_fill_size, le_grand_julien_fill_switch, le_grand_julien_inside_ring, le_grand_julien_inside_power, le_grand_julien_inside_dist / le_grand_julien_inside_power * 0.5, le_grand_julien_inside_size, le_grand_julien_inside_adjust,
+					le_grand_julien_outside_ring, le_grand_julien_outside_power, le_grand_julien_outside_dist / le_grand_julien_outside_power * 0.5, le_grand_julien_outside_size, le_grand_julien_outside_adjust, le_grand_julien_a, le_grand_julien_b, le_grand_julien_c,
+					le_grand_julien_d, le_grand_julien_e, le_grand_julien_f, le_grand_julien_inner_weight1, le_grand_julien_inner_weight2)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					rosize = osize - oring
+					risize = if isize - iring >= 0.0
+										then if isize - iring >= rosize
+													then rosize
+													else isize - iring
+										else 0.0
+					misize = if isize >= rosize
+										then rosize
+										else isize
+
+					rooti = truncateToInt(ipower * unit_rnd_0)
+					ai = (atan2(p_in.y, p_in.x) + toReal(rooti) * twopi()) / ipower
+					ri = (((isize + osize) / 2) + iadjust) * pow(dot(p_in, p_in), idist)
+
+					x = a * p_in.x + b * p_in.y + e
+					y = c * p_in.x + d * p_in.y + f
+					rooto = truncateToInt(opower * unit_rnd_1)
+					ao = (atan2(y, x) + toReal(rooto) * twopi()) / opower
+					ro = (osize + oadjust) * pow(x * x + y * y, odist)
+
+					ijulian = vec2(cos(ai), sin(ai)) * ri
+					ojulian = vec2(cos(ao), sin(ao)) * ro
+
+					ir_min = min(rosize, misize)
+					ir_max = max(rosize, misize)
+					irad = length(ijulian)
+					iang = atan2(ijulian.y, ijulian.x)
+					is = sin(iang)
+					ic = cos(iang)
+					icrop = if irad > ir_max || irad < ir_min
+									then if 1.0 == 1.0
+											then vec2(0.0, 0.0)
+											else vec2(ic, is) * (ir_max)
+									else ijulian
+
+					or_min = min(osize, 10000000)
+					or_max = max(osize, 10000000)
+					orad = length(ojulian)
+					oang = atan2(ojulian.y, ojulian.x)
+					os = sin(oang)
+					oc = cos(oang)
+					ocrop = if orad > or_max || orad < or_min
+									then if 1.0 == 1.0
+											then vec2(0.0, 0.0)
+											else vec2(oc, os) * (or_max)
+									else ojulian
+
+					blrad = osize * sqrt(unit_rnd_8)
+					bangle = unit_rnd_9 * twopi()
+					blur = vec2(cos(bangle), sin(bangle)) * blrad
+
+					bir_min = min(misize, risize)
+					bir_max = max(misize, risize)
+					brad = length(blur)
+					bang = atan2(blur.y, blur.x)
+					bs = sin(bang)
+					bc = cos(bang)
+					bicrop = if brad > bir_max || brad < bir_min
+										then if 1.0 == 1.0
+													then vec2(0.0, 0.0)
+													else vec2(bc, bs) * (bir_max)
+										else blur
+
+					bor_min = min(rosize, osize)
+					bor_max = max(rosize, osize)
+					bocrop = if brad > bor_max || brad < bor_min
+										then if 1.0 == 1.0
+													then vec2(0.0, 0.0)
+													else vec2(bc, bs) * (bor_max)
+										else blur
+
+					rotm = mat2x2(cos(rot), -sin(rot),
+												sin(rot), cos(rot))
+					rlin = rotm * p_in * fsize
+
+					z = complex(rlin.x, rlin.y)
+					z1 = 1.0 / z
+					result = invpi() * log((z + 1.0) / (-z + 1.0))
+					arctanh = vec2(result.re, result.im)
+					result2 = twoinvpi() * log(z + sqrt(z * z + 1.0))
+					arcsinh = vec2(result2.re, result2.im)
+					result3 = invpi() * log(z1 + sqrt(z1 + 1.0) * sqrt(z1 - 1.0))
+					arcsech = lerp(vec2(result3.im, result3.re), vec2(-result3.im, -result3.re), if unit_rnd_6 <= 0.5
+																																												then 0.0
+																																												else 1.0)
+
+					b = unit_rnd_2 * twopi()
+					t = gauss_rnd_0 * fsize
+					rgauss = vec2(cos(b), sin(b)) * t + (rlin / fsize)
+					hemisphere = rgauss * (1.0 / sqrt(dot(rgauss, rgauss) + 1))
+
+					inside = (if fswitch <= 0.0
+										then arcsech
+										else if fswitch <= 0.25
+													then arctanh
+													else if fswitch <= 0.5
+																then arcsinh
+																else if fswitch <= 0.75
+																			then hemisphere
+																			else rlin) * (risize)
+					cA = max(-1.0, min(0.0, 1.0))
+					xi = inside.x
+					yi = inside.y
+					frad = sqrt(xi * xi + yi * yi)
+					fill = if frad > risize
+									then if 1 == 1
+												then vec2(0.0, 0.0)
+												else
+													let
+														fang = atan2(yi, xi)
+														frdc = (risize) + (unit_rnd_7 * 0.5 * cA)
+														fs = sin(fang)
+														fc = cos(fang)
+													in
+														vec2(frdc * fc, frdc * fs)
+									else
+										vec2(xi, yi)
+				in
+					lerp(lerp(icrop, ocrop, if unit_rnd_4 <= iw1 then 1.0 else 0.0), lerp(lerp(bicrop, bocrop, if unit_rnd_10 >= 0.5 then 1.0 else 0.0), fill, if unit_rnd_11 >= 0.5 then 1.0 else 0.0), if unit_rnd_5 <= iw2 then 1.0 else 0.0) * weight
+			]]>
+		</string>
+	</transform_def>
+	<transform_def name="linkX_omnispher">
+		<node name="input_params">
+			<real name="omnispher">1</real>
+			<real name="omnispher_radius"  minval="0">1</real>
+			<real name="omnispher_thickness" >0.1</real>
+			<real name="omnispher_contrast" minval="0">0.5</real>
+			<real name="omnispher_pow" >1.5</real>
+			<real name="omnispher_inside_rotate" >0</real>
+			<real name="omnispher_inside_size" >1</real>
+			<real name="omnispher_inside_switch" minval="0" maxval="1">0</real>
+			<real name="omnispher_inner_weight" minval="0" maxval="1">0.75</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="radius" />
+			<real name="radius1" />
+			<real name="contrast" />
+			<real name="power" />
+			<real name="isr" />
+			<real name="iss" />
+			<real name="iswitch" />
+			<real name="iw" />
+		</node>
+
+		<int name="num_unit_randoms">4</int>
+		<int name="num_gauss_randoms">1</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				let
+					radius1 = omnispher_radius + omnispher_thickness
+				in
+					linkX_omnispher_init_result(omnispher, omnispher_radius, radius1, omnispher_contrast, omnispher_pow, omnispher_inside_rotate, omnispher_inside_size, omnispher_inside_switch, omnispher_inner_weight)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					r = length(p_in)
+					alpha = radius / r
+					glynn = if r < radius1
+									then vec2(0.0, 0.0)
+									else if unit_rnd_0 > contrast * pow(alpha, power)
+												then p_in
+												else p_in * (alpha * alpha)
+
+					rotm = mat2x2(cos(isr), -sin(isr),
+												sin(isr), cos(isr))
+					rlin = rotm * p_in * iss
+
+					z = complex(rlin.x, rlin.y)
+					result = invpi() * log((z + 1.0) / (-z + 1.0))
+					arctanh = vec2(result.re, result.im)
+					result2 = twoinvpi() * log(z + sqrt(z * z + 1.0))
+					arcsinh = vec2(result2.re, result2.im)
+
+					b = unit_rnd_0 * twopi()
+					t = gauss_rnd_0 * iss
+					rgauss = vec2(cos(b), sin(b)) * t + rlin
+					hemisphere = rgauss * (1.0 / sqrt(dot(rgauss, rgauss) + 1))
+
+					r2 = dot(p_in, p_in)
+					spher = if r2 >1
+									then if unit_rnd_1 < 0.5
+												then rlin / r2
+												else rlin
+									else vec2(0.0, 0.0)
+
+					inside = (if iswitch <= 0.0
+										then rlin
+										else if iswitch <= 0.25
+													then arctanh
+													else if iswitch <= 0.5
+																then arcsinh
+																else if iswitch <= 0.75
+																			then hemisphere
+																			else spher)
+					rb = length(inside)
+					crin = radius - (radius1 * 0.5)
+					crout = radius + (radius1 * 0.5)
+					rmin = min(crin, crout)
+					rmax = max(crin, crout)
+					ang = atan2(inside.y, inside.x)
+					s = sin(ang)
+					c = cos(ang)
+					rinside = if rb > crout || rb < crin
+										then if 1.0 == 1.0
+													then vec2(0.0, 0.0)
+													else vec2(c, s) * (crout * radius)
+										else inside * radius
+				in
+					lerp(glynn, rinside, if unit_rnd_1 <= iw
+																then 1.0
+																else 0.0)
+			]]>
+		</string>
+	</transform_def>
+	<transform_def name="linkX_one_man_band">
+		<!-- xform made by Crystalize, but honestly it couldn't have been done without the whole community.
+			Thanks ya'll! <3 -->
+		<node name="input_params">
+			<real name="one_man_band" minval="0">1</real>
+			<real name="one_man_band_cyl_length">10</real>
+			<real name="one_man_band_cyl_width" minval="0.0" maxval="0.95">0.05</real>
+			<real name="one_man_band_cyl_blur_strength">1</real>
+			<real name="one_man_band_inside_rotate">0</real>
+			<real name="one_man_band_inside_switch" minval="0.0" maxval="0.005">0</real>
+			<real name="one_man_band_outside_switch" minval="0.0" maxval="0.005">0</real>
+			<real name="one_man_band_inner_weight1" minval="0.0" maxval="1.0">0.5</real>
+			<real name="one_man_band_inner_weight2" minval="0.0" maxval="1.0">0.99</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="cl" />
+			<real name="cw" />
+			<real name="clbs" />
+			<real name="bpr" />
+			<real name="terp1" />
+			<real name="terp2" />
+			<real name="iw1" />
+			<real name="iw2" />
+		</node>
+
+		<int name="num_unit_randoms">3</int>
+		<int name="num_gauss_randoms">1</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				linkX_one_man_band_init_result(one_man_band, one_man_band_cyl_length, one_man_band_cyl_width - 0.05, one_man_band_cyl_blur_strength,
+							one_man_band_inside_rotate * quartpi(), one_man_band_inside_switch,
+							one_man_band_outside_switch, one_man_band_inner_weight1, one_man_band_inner_weight2)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					rotm = mat2x2(cos(bpr), -sin(bpr),
+							sin(bpr), cos(bpr))
+					bpin = rotm * p_in
+					z = complex(bpin.y, bpin.x)
+					result = ((weight * invpi()) * (0.9 - cw)) * log((-z + 1.0) / (z + 1.0))
+					result2 = ((weight * twoinvpi()) * (0.9 - cw)) * log(z + sqrt(z * z + 1.0))
+					ast_out = lerp(vec2(result.im, result.re),
+							vec2(result2.im, result2.re),
+							if terp1 <= 0.0 then 0.0 else 1.0)
+
+					scale = weight / (dot(p_in, p_in))
+					x_off = if p_in.x >= 0 then (1.0 + cw) else (-1.0 - cw)
+					sp_out = (if terp2 <= 0.0 then p_in else p_in * scale) + vec2(x_off, 0.0) * weight
+
+					a = unit_rnd_0 * twopi()
+					s = gauss_rnd_0 * clbs
+					g = vec2(cos(a), sin(a)) * s + p_in
+					cyl1 = vec2((g.x * (1.0 + (cw * (halfinvpi() * 10.0 * fourpi())))) / sqrt(g.x * g.x + 1.0) - 19.0, g.y * (1.0 + cl)) * (weight * 0.05)
+					cyl2 = vec2((g.x * (1.0 + (cw * (halfinvpi() * 10.0 * fourpi())))) / sqrt(g.x * g.x + 1.0) + 19.0, g.y * (1.0 + cl)) * (weight * 0.05)
+				in
+					lerp(lerp(ast_out, sp_out, if unit_rnd_0 >= iw1
+									then 1.0
+									else 0.0), lerp(cyl1, cyl2, if unit_rnd_1 >= 0.5
+													then 1.0
+													else 0.0), if unit_rnd_2 >= iw2
+															then 1.0
+															else 0.0)
+			]]>
+		</string>
+	</transform_def>
+	<transform_def name="linkX_pretty_plastic">
+		<node name="input_params">
+			<real name="pretty_plastic">1</real>
+			<real name="pretty_plastic_zero" minval="0" maxval="1">0</real>
+			<real name="pretty_plastic_hemi_gaussian">1</real>
+			<real name="pretty_plastic_sine_power">1</real>
+			<real name="pretty_plastic_AT_rotate">1</real>
+			<real name="pretty_plastic_hemi_AT_sine_switch" minval="0" maxval="1">0</real>
+			<real name="pretty_plastic_linear_flip" minval="0" maxval="1">0</real>
+			<real name="pretty_plastic_inner_weight" minval="0" maxval="1">0.9</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="zero" />
+			<real name="g_power" />
+			<real name="s_power" />
+			<real name="atr" />
+			<real name="hatswitch" />
+			<real name="l_flip" />
+			<real name="iw" />
+		</node>
+
+		<int name="num_unit_randoms">5</int>
+		<int name="num_gauss_randoms">1</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				linkX_pretty_plastic_init_result(pretty_plastic, pretty_plastic_zero, pretty_plastic_hemi_gaussian,
+				pretty_plastic_sine_power, pretty_plastic_AT_rotate * quartpi(), pretty_plastic_hemi_AT_sine_switch,
+				pretty_plastic_linear_flip, pretty_plastic_inner_weight)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					ur = unit_rnd_0 * twopi()
+					gr = gauss_rnd_0 * g_power
+					g = vec2(cos(ur), sin(ur)) * gr + p_in
+					hemi = g * (weight / sqrt(dot(g, g) + 1))
+
+					a = unit_rnd_4 * twopi()
+					u = unit_rnd_3
+					r = if s_power == 1
+						then acos(u * 2 - 1)
+						else acos(exp(log(1 - u) * s_power) * 2 - 1)
+					m = weight * r * invpi()
+					sine_out = vec2(cos(a), sin(a)) * m
+
+					cri2 = 0.9
+					cro2 = 1.0
+					r_min2 = min(cri2, cro2)
+					r_max2 = max(cri2, cro2)
+					rad3 = length(hemi)
+					ang2 = atan2(hemi.y, hemi.x)
+					s3 = sin(ang2)
+					c3 = cos(ang2)
+					crop_out2 = if rad3 > cro2 || rad3 < cri2
+							then if zero == 0.0
+								then vec2(0.0, 0.0)
+								else vec2(c3, s3) * (cro2 * weight)
+							else hemi * weight
+
+
+					rotm = mat2x2(cos(atr), -sin(atr),
+							sin(atr), cos(atr))
+					at_in = rotm * p_in
+					z = complex(at_in.x, at_in.y)
+					result = (invpi()) * log((z + 1.0) / (-z + 1.0))
+					cA = max(-1.0, min(0.0, 1.0))
+					xi = result.re
+					yi = result.im
+					w2 = weight * 0.9
+					rad2 = sqrt(xi * xi + yi * yi)
+					at_out = lerp(if rad2 > 1 then if zero == 0 then vec2(0.0, 0.0)
+							else let
+								ang2 = atan2(yi, xi)
+								rdc = 1 + (unit_rnd_0 * 0.5 * cA)
+								s2 = sin(ang2)
+								c2 = cos(ang2)
+							in
+								vec2(w2 * rdc * c2, w2 * rdc * s2)
+							else vec2(w2 * xi, w2 * yi), crop_out2, if unit_rnd_2 >= 0.9
+												then 1.0
+												else 0.0)
+					scale = weight / dot(p_in, p_in)
+				in
+					lerp(((if l_flip == 0
+						then p_in * scale
+						else p_in) + normalise(p_in)) * weight, (if hatswitch == 0.0
+											then at_out
+											else if hatswitch == 1.0
+												then sine_out
+												else hemi), if unit_rnd_1 >= iw
+													then 1.0
+													else 0.0)
+			]]>
+		</string>
+	</transform_def>
+	<transform_def name="linkX_the_ringer">
+		<node name="input_params">
+			<real name="the_ringer">1</real>
+			<real name="the_ringer_split" minval="0">0.5</real>
+			<real name="the_ringer_inside_rotate">2</real>
+			<real name="the_ringer_inside_size">1</real>
+			<real name="the_ringer_inside_switch" minval="0" maxval="1">0.0</real>
+			<real name="the_ringer_inner_weight" minval="0" maxval="1">0.75</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="split" />
+			<real name="isr" />
+			<real name="iss" />
+			<real name="iswitch" />
+			<real name="iw" />
+		</node>
+
+		<int name="num_unit_randoms">3</int>
+		<int name="num_gauss_randoms">1</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				linkX_the_ringer_init_result(the_ringer, the_ringer_split, the_ringer_inside_rotate * quartpi(), the_ringer_inside_size, the_ringer_inside_switch, the_ringer_inner_weight)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					r = length(p_in)
+					csplit = if r < 1.0 - split
+										then p_in
+										else let
+											a = atan2(p_in.y, p_in.x)
+										in
+											vec2(cos(a), sin(a)) * (r + split)
+
+					rotm = mat2x2(cos(isr), -sin(isr),
+												sin(isr), cos(isr))
+					rlin = rotm * p_in * iss
+
+					z = complex(rlin.x, rlin.y)
+					result = invpi() * log((z + 1.0) / (-z + 1.0))
+					arctanh = vec2(result.re, result.im)
+					result2 = twoinvpi() * log(z + sqrt(z * z + 1.0))
+					arcsinh = vec2(result2.re, result2.im)
+
+					b = unit_rnd_0 * twopi()
+					t = gauss_rnd_0 * iss
+					rgauss = vec2(cos(b), sin(b)) * t + rlin
+					hemisphere = rgauss * (1.0 / sqrt(dot(rgauss, rgauss) + 1))
+
+					r2 = dot(p_in, p_in)
+					spher = if r2 >1
+									then if unit_rnd_1 < 0.5
+												then rlin / r2
+												else rlin
+									else vec2(0.0, 0.0)
+
+					inside = (if iswitch <= 0.0
+										then rlin
+										else if iswitch <= 0.25
+													then arctanh
+													else if iswitch <= 0.5
+																then arcsinh
+																else if iswitch <= 0.75
+																			then hemisphere
+																			else spher) * (if split < 1.0
+																											then 1.0
+																											else split)
+					rb = length(inside)
+					c_in = if split < 1.0
+									then (1.0 - split)
+									else 0.0
+					c_out = if split > 1.0
+									then split
+									else 1.0
+					r_min = min(c_in, c_out)
+					r_max = max(c_in, c_out)
+					ang = atan2(inside.y, inside.x)
+					s = sin(ang)
+					c = cos(ang)
+					ccrop = if rb > r_max || rb < r_min
+									then if 1.0 == 1.0
+												then vec2(0.0, 0.0)
+												else vec2(c, s) * c_out
+									else inside
+				in
+					lerp(csplit, ccrop, if unit_rnd_2 >= iw
+															then 1.0
+															else 0.0) * (weight)
+			]]>
+		</string>
+	</transform_def>
+	<transform_def name="linkX_tiled_squares">
+		<node name="input_params">
+			<real name="tiled_squares">1</real>
+			<real name="tiled_squares_inside_rotate">0</real>
+			<real name="tiled_squares_inside_size">1</real>
+			<real name="tiled_squares_inside_switch" minval="0" maxval="1">0</real>
+			<real name="tiled_squares_tile_strength" minval="0.5">1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="atr" />
+			<real name="size" />
+			<real name="iswitch" />
+			<real name="strength" />
+		</node>
+
+		<int name="num_unit_randoms">4</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				linkX_tiled_squares_init_result(tiled_squares, tiled_squares_inside_rotate * quartpi(), tiled_squares_inside_size, tiled_squares_inside_switch, tiled_squares_tile_strength)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					rotm = mat2x2(cos(atr), -sin(atr),
+												sin(atr), cos(atr))
+					atin = rotm * (p_in * size)
+					z = complex(atin.x, atin.y)
+					result = (halfinvpi()) * log((z + 1.0) / (-z + 1.0))
+					at_out = vec2(result.im, result.re)
+					result2 = (invpi()) * log(z + sqrt(z * z + 1.0))
+					as_out = vec2(result2.im, result2.re)
+					catx = clamp(if iswitch == 0 then atin.x else if iswitch == 1.0 then as_out.x else at_out.x, -0.5, 0.5)
+					caty = clamp(if iswitch == 0 then atin.y else if iswitch == 1.0 then as_out.y else at_out.y, -0.5, 0.5)
+					cat = vec2(fract(catx), fract(caty))
+					log_out1 = vec2(cat.y, cat.x + floor(log(unit_rnd_0) * (if unit_rnd_1 < 0.5
+																															then strength
+																															else -strength) + 0.5))
+					log_out2 = vec2(log_out1.x + floor(log(unit_rnd_3) * (if unit_rnd_2 < 0.5
+																															then strength
+																															else -strength) + 0.5), log_out1.y)
+				in
+					log_out2 * weight
+			]]>
+		</string>
+	</transform_def>
+	<transform_def name="linkX_what_the_fill">
+		<node name="input_params">
+			<real name="what_the_fill" minval="0.0">1</real>
+			<real name="what_the_fill_cyl_length">5</real>
+			<real name="what_the_fill_cyl_width" minval="0.0" maxval="0.95">0.05</real>
+			<real name="what_the_fill_cyl_blur_strength">1</real>
+			<real name="what_the_fill_inside_rotate">2</real>
+			<real name="what_the_fill_inside_size">1</real>
+			<real name="what_the_fill_inside_switch" minval="0.0" maxval="1.0">0</real>
+			<real name="what_the_fill_inside_strength" minval="0.5">1</real>
+			<real name="what_the_fill_outside_switch" minval="0.0" maxval="0.005">0</real>
+			<real name="what_the_fill_inner_weight1" minval="0.0" maxval="1.0">0.9</real>
+			<real name="what_the_fill_inner_weight2" minval="0.0" maxval="1.0">0.9</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="cl" />
+			<real name="cw" />
+			<real name="clbs" />
+			<real name="atr" />
+			<real name="size" />
+			<real name="iswitch" />
+			<real name="strength" />
+			<real name="terp2" />
+			<real name="iw1" />
+			<real name="iw2" />
+		</node>
+
+		<int name="num_unit_randoms">9</int>
+		<int name="num_gauss_randoms">2</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				linkX_what_the_fill_init_result(what_the_fill, what_the_fill_cyl_length * 10,
+					what_the_fill_cyl_width - 0.05, what_the_fill_cyl_blur_strength,
+					what_the_fill_inside_rotate * quartpi(), what_the_fill_inside_size, what_the_fill_inside_switch,
+					what_the_fill_inside_strength, what_the_fill_outside_switch,
+					what_the_fill_inner_weight1, what_the_fill_inner_weight2)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					rotm = mat2x2(
+						cos(atr), -sin(atr),
+						sin(atr), cos(atr))
+					atin = rotm * p_in * size
+					tmp = dot(atin, atin) + size
+					z = complex(atin.x, atin.y)
+					z1 = 1.0 / z
+					resulta = halfinvpi() * log((z + 1.0) / (-z + 1.0))
+					resultb = invpi() * log(z + sqrt(z * z + 1.0))
+					resultc = halfinvpi() * log(z1 + sqrt(z1 + 1.0) * sqrt(z1 - 1.0))
+					resultd = halfinvpi() * log((z * tmp) + (z * tmp))
+					epolar = vec2(resultd.im, resultd.re)
+					cpx = clamp(epolar.x, -0.5, 0.5)
+					cpy = clamp(epolar.y, 0.0, 0.5)
+					a1 = unit_rnd_8 * twopi()
+					s1 = gauss_rnd_1 * size
+					gauss = vec2(cos(a1), sin(a1)) * s1 + (atin / size)
+					arctanh = vec2(resulta.im, resulta.re)
+					arcsinh = vec2(resultb.im, resultb.re)
+					arcsech = lerp(vec2(resultc.im, resultc.re), vec2(-resultc.im, -resultc.re), if unit_rnd_6 <= 0.5
+																																												then 0.0
+																																												else 1.0)
+					rpolar = lerp(vec2(cpx, cpy), vec2(-cpx, -cpy), if unit_rnd_7 >= 0.5 then 1.0 else 0.0)
+					cylinder = vec2(gauss.x / sqrt(gauss.x * gauss.x + 1.0), gauss.y * strength) * 0.5
+					inside = if iswitch <= 0.0
+										then arctanh
+										else if iswitch <= 0.25
+													then arcsinh
+													else if iswitch <= 0.5
+																then arcsech
+																else if iswitch <= 0.75
+																			then rpolar
+																			else cylinder
+
+					cinx = clamp(inside.x, -0.5, 0.5)
+					ciny = clamp(inside.y, -0.5, 0.5)
+					log_out = (if iswitch > 0.75 then cylinder else vec2(ciny, cinx + floor(log(unit_rnd_0) * (if unit_rnd_1 < 0.5
+																																then strength
+																																else -strength) + 0.5))) * (weight * (1.8 - (cw * 2)))
+
+					scale = weight / (dot(p_in, p_in))
+					x_off = if p_in.x >= 0 then (1.0 + cw) else (-1.0 - cw)
+					sp_out = (if terp2 <= 0.0 then p_in else p_in * scale) + vec2(x_off, 0.0) * weight
+
+					a = unit_rnd_2 * twopi()
+					s = sqrt(abs(gauss_rnd_0)) * clbs
+					g = vec2(cos(a), sin(a)) * s + p_in
+					cyl1 = vec2((g.x * (1.0 + (cw * (halfinvpi() * 10.0 * fourpi())))) / sqrt(g.x * g.x + 1.0) - 19.0, g.y * (1.0 + cl)) * (weight * 0.05)
+					cyl2 = vec2((g.x * (1.0 + (cw * (halfinvpi() * 10.0 * fourpi())))) / sqrt(g.x * g.x + 1.0) + 19.0, g.y * (1.0 + cl)) * (weight * 0.05)
+				in
+					lerp(lerp(log_out, sp_out, if unit_rnd_3 >= iw1
+						then 1.0
+						else 0.0), lerp(cyl1, cyl2, if unit_rnd_4 >= 0.5
+							then 1.0
+							else 0.0), if unit_rnd_5 >= iw2
+								then 1.0
+								else 0.0)
+			]]>
+		</string>
+	</transform_def>
+</user_transforms>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>	
+	<transform_def name="bearhug">
+		<node name="input_params">
+			<real name="bearhug">1</real>
+			<real name="bearhug_x">1</real>
+			<real name="bearhug_y">1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="ex" />
+			<real name="wy" />
+		</node>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				bearhug_init_result(bearhug, bearhug_x, bearhug_y)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					m = wy * cosh(p_in.y)
+					n = (dot(p_in, p_in)) * ex
+					px = (p_in.x) * n
+					py = (p_in.y) * m 
+					c = complex(px, py)
+				in
+					vec2(c.im, c.re) * weight
+			]]>
+		</string>
+	</transform_def>
+</user_transforms>
+

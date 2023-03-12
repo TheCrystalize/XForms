@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>	
+	<transform_def name="elliptic_container">
+		<node name="input_params">
+			<real name="elliptic_container">1</real>
+			<real name="elliptic_container_t" minval="0" maxval="1">0</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="t" />
+		</node>
+
+		<int name="num_unit_randoms">1</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				elliptic_container_init_result(elliptic_container, elliptic_container_t)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					tmp = dot(p_in, p_in) + 1
+					x2 = 2 * p_in.x
+					xmax = 0.5 * (sqrt(tmp + x2) + sqrt(tmp - x2))
+					a = p_in.x / xmax
+					#b = sqrt(max(0, 1 - a * a))
+					w = if p_in.y > 0 then weight else -weight
+					fx = asin(a) * (weight * twoinvpi())
+					#fx = atan2(a, b) * (weight * twoinvpi())
+					fy = log(xmax + sqrt(max(0, xmax - 1))) * w
+					el_out = vec2(fx, fy)
+
+					cl_out = vec2(p_in.x / sqrt(p_in.x * p_in.x + 1.0), p_in.y) * weight
+				in
+					lerp(el_out, cl_out, t)
+			]]>
+		</string>
+	</transform_def>
+</user_transforms>
