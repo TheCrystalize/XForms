@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="designed21">
+		<node name="input_params">
+			<real name="designed21">1</real>
+			<real name="fill" minval="0" maxval="0.005">0</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="fill" />
+		</node>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				designed21_init_result(designed21, fill)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					r = 1 / length(p_in)
+					s = if r > halfinvpi() then sin(p_in.x) else cos(p_in.y)
+					z = s * sin(length(p_in)) * exp((p_in.x + p_in.y) / (p_in.x - p_in.y)) / tan(p_in.x + p_in.y) * s
+					con1 = abs(z) < r
+					con2 = abs(z) > r
+				in
+					(if if fill > 0.0 then con1 else con2 then p_in else vec2(0.0)) * weight
+			]]>
+		</string>
+	</transform_def>
+
+
+</user_transforms>

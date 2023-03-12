@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="gasket_blur">
+	<!-- original transformation by zy0rg, translated to Winter by Crystalize -->
+		<node name="input_params">
+			<real name="gasket_blur">1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+		</node>
+
+		<int name="num_unit_randoms">4</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				gasket_blur_init_result(gasket_blur)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					a = unit_rnd_0 * twopi()
+					r0 = 1.0 / sqrt(unit_rnd_1 - unit_rnd_2)
+					r = if(isFinite(r0), r0, big())
+				in
+					vec2(unit_rnd_3 - 0.5, sin(a) * r) * weight
+			]]>
+		</string>
+	</transform_def>
+
+
+</user_transforms>

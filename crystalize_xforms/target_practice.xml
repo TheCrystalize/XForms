@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>	
+	<transform_def name="target_practice">
+		<node name="input_params">
+			<real name="target_practice">1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+		</node>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				target_practice_init_result(target_practice * pi())
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					n = complex(cos(toReal(truncateToInt(p_in.x))), sin(toReal(truncateToInt(p_in.y))))
+					r = length(vec2(n.im + n.re)) * twoinvpi()
+					x = truncateToInt(r)
+					y1 = log(complex(tanh(toReal(x)), sinh(toReal(x))))
+					y2 = log(complex(cosh(toReal(x)), tanh(toReal(x))))
+				in
+					(p_in * vec2(y1.im + y2.re).y * floor(r)) * (0.1 / weight)
+			]]>
+		</string>
+	</transform_def>
+</user_transforms>

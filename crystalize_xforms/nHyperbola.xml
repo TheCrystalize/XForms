@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="nHyperbola">
+		<node name="input_params">
+			<real name="nHyperbola">1</real>
+			<real name="nHyperbola_n">3</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="scale" />
+			<real name="n" />
+		</node>
+
+		<int name="num_unit_randoms">2</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				nHyperbola_init_result(nHyperbola, nHyperbola_n)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					z = complex(p_in)
+					c = z / cpow(-cpow(z, n) + 1, 1 / n)
+				in
+					toVec2(c) * scale
+			]]>
+		</string>
+	</transform_def>
+
+
+</user_transforms>

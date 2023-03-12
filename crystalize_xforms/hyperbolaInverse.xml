@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="hyperbolaInverse">
+		<node name="input_params">
+			<real name="hyperbolaInverse">1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+		</node>
+
+		<int name="num_unit_randoms">2</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				hyperbolaInverse_init_result(hyperbolaInverse)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					z = complex(p_in)
+					c = 1 / sqrt(z * z - 1)
+					nc = unit_rnd_0 > 0.5 ? c : -c
+				in
+					toVec2(nc) * weight
+			]]>
+		</string>
+	</transform_def>
+
+
+</user_transforms>

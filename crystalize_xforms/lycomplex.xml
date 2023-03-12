@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="lycomplex">
+		<!-- original transform by *gasp* Lycium
+					translated to Winter by Crystalize -->
+		<node name="input_params">
+			<real name="lycomplex">1</real>
+			<real name="lycomplex_n0_r">0</real>
+			<real name="lycomplex_n0_i">0</real>
+			<real name="lycomplex_n1_r">1</real>
+			<real name="lycomplex_n1_i">0</real>
+			<real name="lycomplex_n2_r">0</real>
+			<real name="lycomplex_n2_i">0</real>
+			<real name="lycomplex_n3_r">0</real>
+			<real name="lycomplex_n3_i">0</real>
+			<real name="lycomplex_n4_r">0</real>
+			<real name="lycomplex_n4_i">0</real>
+			<real name="lycomplex_d0_r">0</real>
+			<real name="lycomplex_d0_i">0</real>
+			<real name="lycomplex_d1_r">0</real>
+			<real name="lycomplex_d1_i">0</real>
+			<real name="lycomplex_d2_r">1</real>
+			<real name="lycomplex_d2_i">0</real>
+			<real name="lycomplex_d3_r">0</real>
+			<real name="lycomplex_d3_i">0</real>
+			<real name="lycomplex_d4_r">0</real>
+			<real name="lycomplex_d4_i">0</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="DoSqrt" />
+			<real name="n0r" />
+			<real name="n0i" />
+			<real name="n1r" />
+			<real name="n1i" />
+			<real name="n2r" />
+			<real name="n2i" />
+			<real name="n3r" />
+			<real name="n3i" />
+			<real name="n4r" />
+			<real name="n4i" />
+			<real name="d0r" />
+			<real name="d0i" />
+			<real name="d1r" />
+			<real name="d1i" />
+			<real name="d2r" />
+			<real name="d2i" />
+			<real name="d3r" />
+			<real name="d3i" />
+			<real name="d4r" />
+			<real name="d4i" />
+		</node>
+
+		<int name="num_unit_randoms">2</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				let
+					DoSqrt = if((lycomplex_n4_r == 0) && (lycomplex_n4_i == 0) && (lycomplex_d4_r == 0) && (lycomplex_d4_i == 0), 1.0, 0.0)
+				in
+					lycomplex_init_result(lycomplex, DoSqrt, lycomplex_n0_r, lycomplex_n0_i, lycomplex_n1_r, lycomplex_n1_i, lycomplex_n2_r, lycomplex_n2_i, lycomplex_n3_r, lycomplex_n3_i, lycomplex_n4_r, lycomplex_n4_i, lycomplex_d0_r, lycomplex_d0_i, lycomplex_d1_r, lycomplex_d1_i, lycomplex_d2_r, lycomplex_d2_i, lycomplex_d3_r, lycomplex_d3_i, lycomplex_d4_r, lycomplex_d4_i)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					zr = p_in.x
+					zi = p_in.y
+					r2 = zr * zr + zi * zi
+					invr2 = 1.0 / r2
+					z2r = zr * zr - zi * zi
+					z2i = 2.0 * zr * zi
+					invzr = zr * invr2
+					invzi = -zi * invr2
+
+					sqrtza = atan2(zi, zr) + unit_rnd_0 * pi()
+					sqrtzm = pow(r2, 0.25)
+					sqrtzr = if(DoSqrt == 1.0, cos(sqrtza) * sqrtzm, 1.0)
+					sqrtzi = if(DoSqrt == 1.0, sin(sqrtza) * sqrtzm, 1.0)
+
+					numr = (n0r * z2r - n0i * z2i) + (n1r * zr - n1i * zi) + n2r + (n3r * invzr - n3i * invzi) + (n4r * sqrtzr - n4i * sqrtzi)
+					numi = (n0r * z2i + n0i * z2r) + (n1r * zr + n1i * zi) + n2i + (n3r * invzi + n3i * invzr) + (n4r * sqrtzi + n4i * sqrtzr)
+					denr = (d0r * z2r - d0i * z2i) + (d1r * zr - d1i * zi) + d2r + (d3r * invzr - d3i * invzi) + (d4r * sqrtzr - d4i * sqrtzi)
+					deni = (d0r * z2i + d0i * z2r) + (d1r * zr + d1i * zi) + d2i + (d3r * invzi + d3i * invzr) + (d4r * sqrtzi + d4i * sqrtzr)
+
+					finvr2 = weight / (denr * denr + deni * deni)
+				in
+					vec2(numr * denr + numi * deni, numi * denr - numr * deni) * finvr2
+			]]>
+		</string>
+	</transform_def>
+
+
+</user_transforms>

@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="linkX_bars_for_days">
+		<node name="input_params">
+			<real name="bars_for_days">1</real>
+			<real name="bars_for_days_inside_size" minval="0.0">1</real>
+			<real name="bars_for_days_inside_ring" minval="0.0" maxval="1.0">0.05</real>
+			<real name="bars_for_days_fill_rotation">0</real>
+			<real name="bars_for_days_fill_size" minval="0.0">1</real>
+			<real name="bars_for_days_fill_switch" minval="0.0" maxval="1.0">1</real>
+			<real name="bars_for_days_right_rotation">0</real>
+			<real name="bars_for_days_right_size">1</real>
+			<real name="bars_for_days_right_power">1</real>
+			<real name="bars_for_days_right_dist">1</real>
+			<real name="bars_for_days_left_rotation">0</real>
+			<real name="bars_for_days_left_size">1</real>
+			<real name="bars_for_days_left_power">1</real>
+			<real name="bars_for_days_left_dist">1</real>
+			<real name="bars_for_days_interval" minval="-0.5" maxval="0.5">0.0</real>
+			<real name="bars_for_days_warp">0</real>
+			<real name="bars_for_days_inner_weight1" minval="0.0" maxval="1.0">0.5</real>
+			<real name="bars_for_days_inner_weight2" minval="0.0" maxval="1.0">0.5</real>
+			<real name="bars_for_days_inner_weight3" minval="0.0" maxval="1.0">0.5</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="isize" />
+			<real name="iring" />
+			<real name="frot" />
+			<real name="fsize" />
+			<real name="fswitch" />
+			<real name="rrot" />
+			<real name="rsize" />
+			<real name="rpow" />
+			<real name="rdist" />
+			<real name="lrot" />
+			<real name="lsize" />
+			<real name="lpow" />
+			<real name="ldist" />
+			<real name="space" />
+			<real name="warp" />
+			<real name="iw1" />
+			<real name="iw2" />
+			<real name="iw3" />
+		</node>
+
+		<int name="num_unit_randoms">11</int>
+		<int name="num_gauss_randoms">1</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				linkX_bars_for_days_init_result(bars_for_days, bars_for_days_inside_size, bars_for_days_inside_ring, bars_for_days_fill_rotation * quartpi(), bars_for_days_fill_size, bars_for_days_fill_switch,
+				  bars_for_days_right_rotation * quartpi(), bars_for_days_right_size, bars_for_days_right_power, bars_for_days_right_dist / bars_for_days_right_power * 0.5,
+					bars_for_days_left_rotation * quartpi(), bars_for_days_left_size, bars_for_days_left_power, bars_for_days_left_dist / bars_for_days_left_power * 0.5, bars_for_days_interval, bars_for_days_warp,
+					bars_for_days_inner_weight1, bars_for_days_inner_weight2, bars_for_days_inner_weight3)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					rotmr = mat2x2(cos(rrot), -sin(rrot),
+													sin(rrot), cos(rrot))
+					rin = rotmr * (p_in * rsize)
+					rootr = truncateToInt(rpow * unit_rnd_1)
+					ar = (atan2(rin.y, rin.x) + toReal(rootr) * twopi()) / rpow
+					rr = pow(dot(rin, rin), rdist)
+					julianr = vec2(cos(ar), sin(ar)) * rr
+
+					rotml = mat2x2(cos(lrot), -sin(lrot),
+													sin(lrot), cos(lrot))
+					lin = rotml * (p_in * lsize)
+					rootl = truncateToInt(lpow * unit_rnd_2)
+					al = (atan2(lin.y, lin.x) + toReal(rootl) * twopi()) / lpow
+					rl = pow(dot(lin, lin), ldist)
+					julianl = vec2(cos(al), sin(al)) * rl
+
+					roundxr = floor(julianr.x + 0.5)
+					offsetxr = julianr.x - roundxr
+
+					roundxl = floor(julianl.x + 0.5)
+					offsetxl = julianl.x - roundxl
+
+					stripesr = vec2((offsetxr * (0.5 - space) + roundxr) + 0.25, julianr.y + offsetxr * offsetxr * warp)
+					stripesl = vec2(-(offsetxl * (0.5 + space) + roundxl) - 0.25, -(julianl.y + offsetxl * offsetxl * warp))
+
+					bars = lerp(stripesr, stripesl, if unit_rnd_0 >= iw1 then 1.0 else 0.0)
+
+					bisize = if isize - iring > 0.0
+										then if isize - iring > isize
+													then isize
+													else isize - iring
+										else 0.0
+					misize = if isize > 0.0
+										then isize
+										else 0.0
+
+					brad = isize * sqrt(unit_rnd_3)
+					bangle = unit_rnd_4 * twopi()
+					blur = vec2(cos(bangle), sin(bangle)) * brad
+					brmin = min(bisize, misize)
+					brmax = max(bisize, misize)
+					bbrad = length(blur)
+					bang = atan2(blur.y, blur.x)
+					bs = sin(bang)
+					bc = cos(bang)
+					bring = if bbrad > brmax || bbrad < brmin
+									then if 1.0 == 1.0
+												then vec2(0.0, 0.0)
+												else vec2(bc, bs) * (brmax)
+									else blur
+
+					rotmf = mat2x2(cos(frot), -sin(frot),
+													sin(frot), cos(frot))
+					fin = rotmf * (p_in * fsize)
+
+					fa = unit_rnd_5 * twopi()
+					fs = gauss_rnd_0 * fsize
+					fgauss = vec2(cos(fa), sin(fa)) * fs + (fin / fsize)
+					hemisphere = fgauss * (sqrt(dot(fgauss, fgauss) + 1))
+
+					z = complex(fin.x, fin.y)
+					z1 = 1.0 / z
+					resulta = invpi() * log((z + 1.0) / (-z + 1.0))
+					resultb = weight * log(z + sqrt(z * z + 1.0))
+					resultc = invpi() * log(z1 + sqrt(z1 + 1.0) * sqrt(z1 - 1.0))
+					arctanh = vec2(resulta.re, resulta.im)
+					arcsinh = vec2(resultb.re, resultb.im)
+					arcsech = lerp(vec2(resultc.im, resultc.re), vec2(-resultc.im, -resultc.re), if unit_rnd_6 <= 0.5
+																																												then 0.0
+																																												else 1.0)
+					sba = unit_rnd_7 * twopi()
+					sbu = unit_rnd_8
+					sbr = if fsize == 1 then
+							acos(sbu * 2 - 1)
+						else
+							acos(exp(log(1 - sbu) * fsize) * 2 - 1)
+					sbm = sbr * invpi() 
+					sineblur = vec2(cos(sba), sin(sba)) * sbm
+
+					fill = (if fswitch <= 0.0
+									then hemisphere
+									else if fswitch <= 0.25
+												then arctanh
+												else if fswitch <= 0.5
+															then arcsinh
+															else if fswitch <= 0.75
+																		then arcsech
+																		else sineblur) * bisize
+					frmin = min(0.0, bisize)
+					frmax = max(0.0, bisize)
+					frad = length(fill)
+					fang = atan2(fill.y, fill.x)
+					fsn = sin(fang)
+					fc = cos(fang)
+					fcrop = if frad > frmax || frad < frmin
+									then if 1.0 == 1.0
+												then vec2(0.0, 0.0)
+												else vec2(fc, fsn) * (frmax)
+									else fill
+					inside = lerp(bring, fcrop, if unit_rnd_9 >= iw2 then 1.0 else 0.0)
+				in
+					lerp((bars + (normalise(bars) * isize)), inside, if unit_rnd_10 <= iw3 then 1.0 else 0.0) * weight
+			]]>
+		</string>
+	</transform_def>
+</user_transforms>

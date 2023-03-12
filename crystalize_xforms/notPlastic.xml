@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="notPlastic">
+		<node name="input_params">
+			<real name="notPlastic">1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+		</node>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				notPlastic_init_result(notPlastic)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+					(p_in + normalise(p_in)) * weight
+			]]>
+		</string>
+	</transform_def>
+
+
+</user_transforms>

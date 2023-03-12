@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="linkX_pretty_plastic">
+		<node name="input_params">
+			<real name="pretty_plastic">1</real>
+			<real name="pretty_plastic_zero" minval="0" maxval="1">0</real>
+			<real name="pretty_plastic_hemi_gaussian">1</real>
+			<real name="pretty_plastic_sine_power">1</real>
+			<real name="pretty_plastic_AT_rotate">1</real>
+			<real name="pretty_plastic_hemi_AT_sine_switch" minval="0" maxval="1">0</real>
+			<real name="pretty_plastic_linear_flip" minval="0" maxval="1">0</real>
+			<real name="pretty_plastic_inner_weight" minval="0" maxval="1">0.9</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="zero" />
+			<real name="g_power" />
+			<real name="s_power" />
+			<real name="atr" />
+			<real name="hatswitch" />
+			<real name="l_flip" />
+			<real name="iw" />
+		</node>
+
+		<int name="num_unit_randoms">5</int>
+		<int name="num_gauss_randoms">1</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				linkX_pretty_plastic_init_result(pretty_plastic, pretty_plastic_zero, pretty_plastic_hemi_gaussian,
+				pretty_plastic_sine_power, pretty_plastic_AT_rotate * quartpi(), pretty_plastic_hemi_AT_sine_switch,
+				pretty_plastic_linear_flip, pretty_plastic_inner_weight)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					ur = unit_rnd_0 * twopi()
+					gr = gauss_rnd_0 * g_power
+					g = vec2(cos(ur), sin(ur)) * gr + p_in
+					hemi = g * (weight / sqrt(dot(g, g) + 1))
+
+					a = unit_rnd_4 * twopi()
+					u = unit_rnd_3
+					r = if s_power == 1
+						then acos(u * 2 - 1)
+						else acos(exp(log(1 - u) * s_power) * 2 - 1)
+					m = weight * r * invpi()
+					sine_out = vec2(cos(a), sin(a)) * m
+
+					cri2 = 0.9
+					cro2 = 1.0
+					r_min2 = min(cri2, cro2)
+					r_max2 = max(cri2, cro2)
+					rad3 = length(hemi)
+					ang2 = atan2(hemi.y, hemi.x)
+					s3 = sin(ang2)
+					c3 = cos(ang2)
+					crop_out2 = if rad3 > cro2 || rad3 < cri2
+							then if zero == 0.0
+								then vec2(0.0, 0.0)
+								else vec2(c3, s3) * (cro2 * weight)
+							else hemi * weight
+
+
+					rotm = mat2x2(cos(atr), -sin(atr),
+							sin(atr), cos(atr))
+					at_in = rotm * p_in
+					z = complex(at_in.x, at_in.y)
+					result = (invpi()) * log((z + 1.0) / (-z + 1.0))
+					cA = max(-1.0, min(0.0, 1.0))
+					xi = result.re
+					yi = result.im
+					w2 = weight * 0.9
+					rad2 = sqrt(xi * xi + yi * yi)
+					at_out = lerp(if rad2 > 1 then if zero == 0 then vec2(0.0, 0.0)
+							else let
+								ang2 = atan2(yi, xi)
+								rdc = 1 + (unit_rnd_0 * 0.5 * cA)
+								s2 = sin(ang2)
+								c2 = cos(ang2)
+							in
+								vec2(w2 * rdc * c2, w2 * rdc * s2)
+							else vec2(w2 * xi, w2 * yi), crop_out2, if unit_rnd_2 >= 0.9
+												then 1.0
+												else 0.0)
+					scale = weight / dot(p_in, p_in)
+				in
+					lerp(((if l_flip == 0
+						then p_in * scale
+						else p_in) + normalise(p_in)) * weight, (if hatswitch == 0.0
+											then at_out
+											else if hatswitch == 1.0
+												then sine_out
+												else hemi), if unit_rnd_1 >= iw
+													then 1.0
+													else 0.0)
+			]]>
+		</string>
+	</transform_def>
+</user_transforms>

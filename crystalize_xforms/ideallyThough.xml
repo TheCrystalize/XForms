@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="ideallyThough">
+		<node name="input_params">
+			<real name="ideallyThough">1</real>
+			<real name="ideallyThough_N">3</real>
+			<real name="ideallyThough_M">3</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="N" />
+			<real name="nRot" />
+			<real name="nShift" />
+			<real name="mShift" />
+		</node>
+
+		<int name="num_unit_randoms">1</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				let
+					N = ideallyThough_N
+					nRot = twopi() / N
+					nShift = (1/sqrt(1 / square(sin(pi()/N)) - 1)) * (1 / sin(pi()/N) - 1)
+					M = ideallyThough_M
+					mShift = (1/sqrt(1 / square(sin(pi()/M)) - 1)) * (1 / sin(pi()/M) - 1)
+				in
+					ideallyThough_init_result(ideallyThough, N, nRot, nShift, mShift)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					rRot = exp(complex(0,floor(unit_rnd_0 * N) * nRot))
+					z = complex(p_in)
+					firstShift = (z + mShift) / (mShift * z + 1)
+					halfPlane = (firstShift + 1) / (-firstShift + 1)
+					secondShift = (halfPlane + nShift) / (nShift * halfPlane + 1)
+					c = secondShift * rRot * nShift
+				in
+					toVec2(c) * weight
+			]]>
+		</string>
+	</transform_def>
+
+
+</user_transforms>

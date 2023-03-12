@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="ht4F">
+		<!-- Crystalize put this together, but Zueuk is the real genius! ^_^ -->
+		<node name="input_params">
+			<real name="scale">1.0</real>
+			<real name="pv">0</real>
+			<real name="_p">3.0</real>
+			<real name="qv">0</real>
+			<real name="_q">3.0</real>
+			<real name="rv">0</real>
+			<real name="_r">3.0</real>
+			<real name="sv">0</real>
+			<real name="_s">3.0</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="scale" />
+			<real name="pv" />
+			<real name="p" />
+			<real name="qv" />
+			<real name="q" />
+			<real name="rv" />
+			<real name="r" />
+			<real name="sv" />
+			<real name="s" />
+			<real name="_p" />
+			<real name="_q" />
+			<real name="_r" />
+			<real name="_s" />
+		</node>
+
+		<int name="num_unit_randoms">5</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				let
+					rad = pi() / 180
+					p = 360 / _p * rad
+					q = 360 / _q * rad
+					r = 360 / _r * rad
+					s = 360 / _s * rad
+				in
+					ht4F_init_result(scale, pv, p, qv, q, rv, r, sv, s, _p, _q, _r, _s)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					z = complex(p_in)
+					prp = p * floor(unit_rnd_0 * _p)
+					prq = q * floor(unit_rnd_1 * _q)
+					prr = r * floor(unit_rnd_2 * _r)
+					prs = s * floor(unit_rnd_3 * _s)
+					rop = complex(cos(prp), sin(prp))
+					roq = complex(cos(prq), sin(prq))
+					ror = complex(cos(prr), sin(prr))
+					ros = complex(cos(prs), sin(prs))
+					pp = complex(pv)
+					qp = complex(-qv)
+					rp = i(rv)
+					sp = i(-sv)
+
+					z0p = (z + pp) / (pp * z + 1)
+					zrp = z0p * rop
+					zfp = (zrp - pp) / (-pp * zrp + 1)
+
+					z0q = (z - qp) / (-qp * z + 1)
+					zrq = z0q * roq
+					zfq = (zrq + qp) / (qp * zrq + 1)
+
+					z0r = (z + rp) / (-rp * z + 1)
+					zrr = z0r * ror
+					zfr = (zrr - rp) / (rp * zrr + 1)
+
+					z0s = (z - sp) / (sp * z + 1)
+					zrs = z0s * ros
+					zfs = (zrs + sp) / (-sp * zrs + 1)
+
+					f = if(unit_rnd_4 < 0.25, zfp, if(unit_rnd_4 < 0.5, zfq, if(unit_rnd_4 < 0.75, zfr, zfs)))
+
+				in
+					toVec2(f) * scale
+			]]>
+		</string>
+	</transform_def>
+</user_transforms>

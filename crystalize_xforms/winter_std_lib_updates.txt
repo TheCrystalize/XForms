@@ -1,14 +1,83 @@
+
+
 #------------------------------ Crystalize ------------------------------
 
-def epsilon() real : 0.000000000000000001
+def epsilon() real : 0.0000000000001
+def big() real : 100000000000000.0
+def phi() real : 1.6180339887498948482045868343656
+def lemniscate() real : 2.6220575542921198104648395898911194136827
+def i() complex : complex(0.0, 1.0)
+def r() complex : complex(1.0, 0.0)
 
-def square(double x) double : x * x
 
-def modulo(double x, double y) double :
+def square(real x) real : x * x
+def square(complex z) complex : z * z
+
+
+def cot(real x) real : cos(x) / sin(x)
+def sec(real x) real : 1.0 / cos(x)
+def csc(real x) real : 1.0 / sin(x)
+
+def sin2(real x) real : 0.5 * (1.0 - cos(2.0 * x))
+def sec2(real x) real : 2.0 / (cos(2.0 * x) + 1.0)
+def tan2(real x) real : (1.0 - cos(2.0 * x)) / (cos(2.0 * x) + 1.0)
+
+
+def modulo(real x, real y) real :
 	let
 		d = x / y
 	in
 		d - floor(d)
+
+def round(real x) real :
+	let
+		f = floor(x)
+		n = if(x - f > 0.5, 1.0, 0.0)
+	in
+		f + n
+
+def triwave(real x) real : twoinvpi() * asin(sin(pi() * x))
+def cotriwave(real x) real : twoinvpi() * acos(cos(pi() * x))
+def fmsin(real x, real fm) real : asin(twopi() * fm * x)
+
+def complex(real x) complex : complex(x, 0.0)
+def complex(vec2 v) complex : complex(v.x, v.y)
+def i(real x) complex : complex(0.0, x)
+
+def conj(complex z) complex : complex(z.re, -z.im)
+
+def cabs(complex z) : sqrt(z * z)
+def cpow(complex z, real n) : exp(log(z) * n)
+
+def csin(complex z) complex :
+	exp(-i() * z) * i(0.5) - exp(i() * z) * i(0.5)
+def ccos(complex z) complex :
+	(exp(-i() * z) + exp(i() * z)) * 0.5
+def ctan(complex z) complex :
+	(i() * (exp(-i() * z) - exp(i() * z)) / (exp(-i() * z) + exp(i() * z)))
+def ccot(complex z) complex :
+	-((i() * (exp(-i() * z) + exp(i() * z))) / (exp(-i() * z) - exp(i() * z)))
+def csec(complex z) complex :
+	2.0 / (exp(-i() * z) + exp(i() * z))
+def ccsc(complex z) complex :
+	-((2.0 * i()) / (exp(-i() * z) - exp(i() * z)))
+
+
+def csinh(complex z) complex :
+	0.5 * (-exp(-z) + exp(z))
+def ccosh(complex z) complex :
+	(exp(-z) + exp(z)) * 0.5
+def ctanh(complex z) complex :
+	exp(z) / (exp(-z) + exp(z)) - exp(-z) / (exp(-z) + exp(z))
+def ccoth(complex z) complex :
+	(exp(-z) + exp(z)) / (exp(z) - exp(-z))
+def csech(complex z) complex :
+	2.0 * exp(z) / (exp(2.0 * z) + 1.0)
+def ccsch(complex z) complex :
+	2.0 / (exp(z) - exp(-z))
+
+
+def mult_i(real x) complex : complex(0.0, x)
 
 def exclusiveOr(bool a, bool b) bool : (a && !b) || (b && !a)
 
@@ -31,6 +100,33 @@ def jgrid(vec4 v, int i) tuple<vec4, bool> :
 		in
 			(vec4(f.x, f.y, v.z, v.w), true)
 
+def discit(vec2 v, int i) tuple<vec2, bool> :
+	if i > 3
+		let
+		in
+			(v, false)
+	else
+		let
+			r = invpi() * atan2(v.y, v.x)
+			a = length(v) * pi()
+		in
+			(vec2(cos(a), sin(a)) * r, true)
+
+def comit(mat3x3 v, int i) tuple<mat3x3, bool> :
+	if i > truncateToInt(v.e2)
+		let
+		in
+			(v, false)
+	else
+		let
+			c = complex(v.e3, v.e4)
+			z = complex(v.e0, v.e1)
+			u = complex(v.e6, v.e7)
+			nz = sqrt(z + u) * exp(-c * i())
+			nv = mat3x3(nz.re, nz.im, v.e2, c.re, c.im, v.e5, u.re, u.im, v.e8)
+		in
+			(nv, true)
+
 def mbit(vec4 cz, int i) tuple<vec4, bool> :
 	if i > 100
 		let
@@ -44,6 +140,20 @@ def mbit(vec4 cz, int i) tuple<vec4, bool> :
 			ncz = vec4(cz.x, cz.y, m.re, m.im)
 		in
 			(ncz, true)
+
+def mmit(mat3x3 v, int i) tuple<mat3x3, bool> :
+	if ((i > 50) || (i > truncateToInt(v.e6)))
+		let
+		in
+			(v, false)
+	else
+		let
+			z = complex(v.e0, v.e1)
+			c = complex(v.e3, v.e4)
+			m = 1.0 / (-z + c)
+			nv = mat3x3(m.re, m.im, v.e2, v.e3, v.e4, v.e5, v.e6, v.e7, v.e8)
+		in
+			(nv, true)
 
 def find(mat3x3 v, int i) tuple<mat3x3, bool> :
 	if i > 0 || i > truncateToInt(e8(v))
@@ -83,7 +193,7 @@ def minkit(mat3x3 m3, int i) tuple<mat3x3, bool> :
 		in
 			(nm3, true)
 
-def minkowski(double x) double :
+def minkowski(real x) real :
 	let
 		m3 = mat3x3(0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 1.0, 0.0, x)
 		m0 = minkit(m3, 0)
@@ -91,7 +201,7 @@ def minkowski(double x) double :
 	in
 		e7(nx) + e6(nx)
 
-def minkosine(double x, int awv) double :
+def minkosine(real x, int awv) real :
 	let
 		lp = modulo(abs(x), 4.0)
 		p = modulo(abs(x), 2.0)
@@ -100,7 +210,7 @@ def minkosine(double x, int awv) double :
 	in
 		if(exclusiveOr(lp < 2.0, x > 0.0), mink, -mink)
 
-def minkocosine(double x, int awv) double :
+def minkocosine(real x, int awv) real :
 	minkosine(x - 1.0, awv)
 
 def rosoni(mat4x4 v, int i) tuple<mat4x4, bool> :
@@ -110,13 +220,14 @@ def rosoni(mat4x4 v, int i) tuple<mat4x4, bool> :
 			(v, false)
 	else
 		let
+			cerc1 = v.e3 == 1.0
 			r2 = if (v.e10 == 0.0) then if (v.e12 < 0.0)
 					then max(abs(v.e0 - v.e13), abs(v.e1 - v.e14)) + v.e12
 					else square(v.e0 - v.e13) + square(v.e1 - v.e14) - square(v.e12)
 				else if (v.e12 < 0.0)
 					then abs(atan2(v.e1 - v.e14, v.e0 - v.e13)) * pi() + v.e12
 					else if(v.e0 - v.e13 < 0.0, -(v.e0 - v.e13), square(v.e1 - v.e14) - square(v.e0 - v.e13) * (square(v.e12) - square(v.e1 - v.e13)))
-			cerc2 = if(r2 <= 0.0, 1.0, 0.0)
+			cerc2 = if(exclusiveOr(r2 <= 0.0, cerc1), 1.0, 0.0)
 			sweetx = if(toReal(i) == v.e9, v.e0, v.e4)
 			sweety = if(toReal(i) == v.e9, v.e1, v.e5)
 			nv = mat4x4(v.e0 * v.e4 - v.e1 * v.e5, v.e1 * v.e5 + v.e0 * v.e4, v.e2, v.e3,
@@ -125,3 +236,275 @@ def rosoni(mat4x4 v, int i) tuple<mat4x4, bool> :
 					v.e12, v.e13, v.e14, cerc2)
 		in
 			(nv, true)
+
+def rGrad(int ix, int iy, real seed) vec2 :
+	let
+		x = toReal(ix)
+		y = toReal(iy)
+		random = 2920.0 * sin(x * 21942.0 + y * 171324.0 + 8912) * cos(x * 23157.0 * y * 217832.0 + 9758.0) * seed
+	in
+		vec2(cos(random), sin(random))
+
+def dGGrad(int ix, int iy, real x, real y, real seed) real :
+	let
+		grad = rGrad(ix, iy, seed)
+		dx = x - toReal(ix)
+		dy = y - toReal(iy)
+	in
+		dx * grad.x + dy * grad.y
+
+def polypole(mat3x3 v, int i) tuple<mat3x3, bool> :
+	if (i >= truncateToInt(v.e3))
+		let
+		in
+			(v, false)
+	else
+		let
+			sz = complex(v.e0, v.e1)
+			z0 = complex(v.e4, v.e5)
+			z1 = z0 * exp(complex(0, v.e2 * toReal(i)))
+			z2 = log(z1+1)
+			z3 = z2 * exp(complex(0, v.e2 * toReal(-i)))
+			z = sz + z3
+		in
+			(mat3x3(z.re, z.im, v.e2, v.e3, v.e4, v.e5, v.e6, v.e7, v.e8), true)
+
+def errFunc(real x) :
+	let
+		t = 1 / (1 + 0.5 * abs(x))
+		ans = 1 - t * exp(-x * x - 1.26551223 + t * (1.00002368 + t *
+				(0.37409196 + t * (0.09678418 + t *
+				(-0.18628806 + t * (0.27886807 + t *
+				(-1.13520398 + t * (1.48851587 + t *
+				(-0.82215223 + t * 0.17087277)))))))))
+	in
+		if(x >= 0, ans, -ans)
+
+def nonz(real nz) : if(abs(nz) <= epsilon(), epsilon() * toReal(sgn(nz)), nz)
+
+def scot(real angle) real : cos(angle) / nonz(sin(angle))
+
+def ssqrt(real x) real : sqrt(abs(x))
+
+def intpowIter(vec3 z, int i) tuple<vec3, bool> :
+	if (i > truncateToInt(z.e1) || i > truncateToInt(big()))
+		let
+		in
+			(z, false)
+	else
+		let
+		in
+			(vec3(z.e0 * z.e2, z.e1, z.e2), true)
+
+
+def intpow(real x, real p) real :
+	let
+		power = p * toReal(sgn(p))
+		mulf = if(p < 0, 100000000 + abs(x), x)
+		passer = vec3(1.0,power,mulf)
+		iter0 = intpowIter(passer, 1)
+		f = iterate(intpowIter, passer)
+	in
+		f.e0
+
+
+
+def RFiter(mat3x3 v, int i) tuple<mat3x3, bool> :
+	if (i > 25 || (i > 0 && max(max(abs(v.e5), abs(v.e6)), abs(v.e7)) < 0.00001))
+		let
+		in
+			(v, false)
+	else
+		let
+			lambda = sqrt(v.e0 * v.e1) + sqrt(v.e1 * v.e2) + sqrt(v.e2 * v.e0)
+			x = (v.e0 + lambda) * 0.25
+			y = (v.e1 + lambda) * 0.25
+			z = (v.e2 + lambda) * 0.25
+			a = (x + y + z) / 3
+			dx = 1 - x / a
+			dy = 1 - y / a
+			dz = 1 - z / a
+		in
+			(mat3x3(x, y, z, a, lambda, dx, dy, dz, v.e8), true)
+
+def carlsonRF(real x, real y, real z) real :
+	let
+		passer = mat3x3(x,y,z,0,0,0,0,0,0)
+		iter0 = RFiter(passer, 0)
+		z = iterate(RFiter, passer)
+		e2 = z.e5 * z.e6 + z.e6 * z.e7 + z.e7 * z.e5
+		e3 = z.e5 * z.e6 * z.e7
+		res = 1 - 0.1 * e2 + (1 /  14) * e3 + (1 / 24) * intpow(e2, 2) - (3 / 44) * e2 * e3 - (5 / 208) * intpow(e2, 3) + (3 / 104) * intpow(e3, 2) + (0.0625) * intpow(e2, 2) * e3
+	in
+		res / sqrt(z.e3)
+
+
+def cPoincare(complex z, complex p) complex : (z + p) / (z * conj(p) + 1)
+
+def parasize(real x) real : (1 / sqrt(1 / square(sin(pi() / x)))) * (1 / sin(pi() / x) - 1)
+
+def AGMiter(vec2 z, int i) tuple<vec2, bool> :
+	if (i == 10)
+		let
+		in
+			(z, false)
+	else
+		let
+			a = sqrt(z.x * z.y)
+			g = 0.5 * (z.x + z.y)
+		in
+			(vec2(a, g), true)
+
+def AGM(real a, real g) real :
+	let
+		ag = vec2(a, g)
+		iter0 = AGMiter(ag, 0)
+		iter = iterate(AGMiter, ag)
+	in
+		iter.y
+
+def imperfectPolygonIter(mat3x3 v, int i) tuple<mat3x3, bool> :
+	if (i == truncateToInt(v.e5))
+		let
+		in
+			(v, false)
+	else
+		let
+			nn = toDouble(i)
+			z = complex(v.e0, v.e1)
+			f0 = complex(v.e2, v.e3)
+			t0 = z * exp(complex(0.0, v.e4 * nn))
+			t1 = cPoincare(cpow(t0 + 1.0, v.e7), complex(v.e7, 0.0))
+			t = t1 * exp(complex(0.0, -v.e4 * nn))
+			f = f0 + t
+		in
+			(mat3x3(v.e0, v.e1, f.re, f.im, v.e4, v.e5, v.e6, v.e7, v.e8), true)
+
+
+			#------------------------------ split-complex ------------------------------
+
+			struct splitcomplex
+			{
+				vector<real, 2> v
+			}
+
+			def splitcomplex(real re, real im) : splitcomplex([re, im]v)
+			def e0(splitcomplex vec) real : e0(vec.v)
+			def e1(splitcomplex vec) real : e1(vec.v)
+
+			def re(splitcomplex vec) real : e0(vec.v)
+			def im(splitcomplex vec) real : e1(vec.v)
+
+			def op_add(splitcomplex a, splitcomplex b) splitcomplex : splitcomplex(a.v + b.v)
+			def op_add(splitcomplex a, real x) splitcomplex : splitcomplex(e0(a.v) + x, e1(a.v))
+			def op_sub(splitcomplex a, splitcomplex b) splitcomplex : splitcomplex(a.v - b.v)
+			def op_sub(splitcomplex a, real x) splitcomplex : splitcomplex(e0(a.v) - x, e1(a.v))
+			def op_mul(splitcomplex a, real x) splitcomplex : splitcomplex(a.v * x)
+			def op_mul(real x, splitcomplex a) splitcomplex : splitcomplex(a.v * x)
+			def op_mul(splitcomplex a, splitcomplex b) splitcomplex : splitcomplex(e0(a.v) * e0(b.v) + e1(a.v) * e1(b.v), e0(a.v) * e1(b.v) + e1(a.v) * e0(b.v))
+			def op_div(splitcomplex a, real x) splitcomplex : splitcomplex(a.v * (1.0 / x))
+			def op_div(real x, splitcomplex a) splitcomplex :
+				let
+					s = x / (a.re * a.re - a.im * a.im)
+				in
+					splitcomplex(a.re, a.im) * s
+			def op_div(splitcomplex a, splitcomplex b) splitcomplex :
+				let
+					s = 1.0 / (b.re * b.re - b.im * b.im)
+				in
+					splitcomplex(a.re * b.re - a.im * b.im, a.im * b.re - a.re * b.im) * s
+			def op_eq(splitcomplex a, splitcomplex b) bool : (e0(a.v) == e0(b.v)) && (e1(a.v) == e1(b.v))
+			def op_unary_minus(splitcomplex a) splitcomplex : splitcomplex(-a.v)
+
+			def exp(splitcomplex z) splitcomplex :
+				let
+					a = exp(z.re + z.im)
+					b = exp(z.re - z.im)
+				in
+					splitcomplex((a + b) / 2, (a - b) / 2)
+			def log(splitcomplex z) splitcomplex :
+				let
+					a = log(z.re + z.im)
+					b = log(z.re - z.im)
+				in
+					splitcomplex((a + b) / 2, (a - b) / 2)
+			def sin(splitcomplex z) splitcomplex :
+				let
+					a = sin(z.re + z.im)
+					b = sin(z.re - z.im)
+				in
+					splitcomplex((a + b) / 2, (a - b) / 2)
+			def asin(splitcomplex z) splitcomplex :
+				let
+					a = asin(z.re + z.im)
+					b = asin(z.re - z.im)
+				in
+					splitcomplex((a + b) / 2, (a - b) / 2)
+			def cos(splitcomplex z) splitcomplex :
+				let
+					a = cos(z.re + z.im)
+					b = cos(z.re - z.im)
+				in
+					splitcomplex((a + b) / 2, (a - b) / 2)
+			def acos(splitcomplex z) splitcomplex :
+				let
+					a = acos(z.re + z.im)
+					b = acos(z.re - z.im)
+				in
+					splitcomplex((a + b) / 2, (a - b) / 2)
+			def tan(splitcomplex z) splitcomplex :
+				let
+					a = tan(z.re + z.im)
+					b = tan(z.re - z.im)
+				in
+					splitcomplex((a + b) / 2, (a - b) / 2)
+			def atan(splitcomplex z) splitcomplex :
+				let
+					a = atan(z.re + z.im)
+					b = atan(z.re - z.im)
+				in
+					splitcomplex((a + b) / 2, (a - b) / 2)
+
+			def toVec2(splitcomplex z) vec2 : vec2(z.re, z.im)
+
+			def splitcomplex(real x) splitcomplex : splitcomplex(x, 0.0)
+			def splitcomplex(vec2 v) splitcomplex : splitcomplex(v.x, v.y)
+			def sci(real x) splitcomplex : splitcomplex(0.0, x)
+			#------------------------------ Dual-numbers ------------------------------
+
+			struct dual
+			{
+				vector<real, 2> v
+			}
+
+			def dual(real re, real im) : dual([re, im]v)
+			def e0(dual vec) real : e0(vec.v)
+			def e1(dual vec) real : e1(vec.v)
+
+			def re(dual vec) real : e0(vec.v)
+			def im(dual vec) real : e1(vec.v)
+
+			def op_add(dual a, dual b) dual : dual(a.v + b.v)
+			def op_add(dual a, real x) dual : dual(e0(a.v) + x, e1(a.v))
+			def op_sub(dual a, dual b) dual : dual(a.v - b.v)
+			def op_sub(dual a, real x) dual : dual(e0(a.v) - x, e1(a.v))
+			def op_mul(dual a, real x) dual : dual(a.v * x)
+			def op_mul(real x, dual a) dual : dual(a.v * x)
+			def op_mul(dual a, dual b) dual : dual(e0(a.v) * e0(b.v), e0(a.v) * e1(b.v) + e1(a.v) * e0(b.v))
+			def op_div(dual a, real x) dual : dual(a.v * (1.0 / x))
+			def op_div(real x, dual a) dual : dual(x / e0(a.v), x * e1(a.v) / (e0(a.v) * e0(a.v)))
+			def op_div(dual a, dual b) dual : dual(e0(a.v) / e0(b.v), (e1(a.v) * e0(b.v) - e0(a.v) * e1(b.v)) / (e0(a.v) * e0(a.v)))
+			def op_eq(dual a, dual b) bool : (e0(a.v) == e0(b.v)) && (e1(a.v) == e1(b.v))
+			def op_unary_minus(dual a) dual : dual(-a.v)
+
+			def exp(dual z) dual : dual(exp(z.re), exp(z.re) * z.im)
+			def log(dual z) dual : dual(log(z.re), z.im / z.re)
+			def sin(dual z) dual : dual(sin(z.re), z.im * cos(z.re))
+			def cos(dual z) dual : dual(cos(z.re), -z.im * sin(z.re))
+			def tan(dual z) dual : sin(z) / cos(z)
+
+			def toVec2(dual z) vec2 : vec2(z.re, z.im)
+
+			def dual(real x) dual : dual(x, 0.0)
+			def dual(vec2 v) dual : dual(v.x, v.y)
+			def duali(real x) dual : dual(0.0, x)

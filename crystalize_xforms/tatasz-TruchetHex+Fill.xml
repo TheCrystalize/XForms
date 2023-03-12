@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="Truchet_hex_crop">
+		<node name="input_params">
+			<real name="Truchet_hex_crop">1</real>
+			<real name="Truchet_hex_crop_wd" notes="crop width">0.2</real>
+			<real name="Truchet_hex_crop_mode" notes="0-1-2 crop points or croplines">2</real>
+			<real name="Truchet_hex_crop_inv" notes="0-1 inverts cropped area">1</real>
+			<real name="Truchet_hex_crop_seed" notes="seed">1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="Truchet_hex_crop_mode" />
+			<real name="Truchet_hex_crop_inv" />
+			<real name="Truchet_hex_crop_seed" />
+			<real name="d1" />
+			<real name="d2" />
+		</node>
+
+		 <int name="num_unit_randoms">1</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				let
+					d1 = 0.5 + Truchet_hex_crop_wd
+					d2 = 0.5 - Truchet_hex_crop_wd
+				in
+					Truchet_hex_crop_init_result(Truchet_hex_crop, Truchet_hex_crop_mode, Truchet_hex_crop_inv, Truchet_hex_crop_seed, d1, d2)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					x = 0.57735026918962576450914878050196 * p_in.x - p_in.y / 3.0 # sqrt(3) / 3
+					z = 2.0 * p_in.y / 3.0
+					y = -x - z
+					#round
+					rx = floor(x + 0.5)
+					ry = floor(y + 0.5)
+					rz = floor(z + 0.5)
+					x_diff = abs(rx - x)
+					y_diff = abs(ry - y)
+					z_diff = abs(rz - z)
+					r_final =
+						if (x_diff > y_diff && x_diff > z_diff) then
+							vec3(-ry-rz, ry, rz)
+						else
+							if (y_diff > z_diff) then
+								vec3(rx, -rx-rz, rz)
+							else
+								vec3(rx, ry, -rx-ry)
+					FXY_h = vec2(sqrt3() * e0(r_final) + halfsqrt3() * e2(r_final), 1.5 * e2(r_final))
+					FXY = p_in - FXY_h
+					#rotations
+					add =
+						if (Truchet_hex_crop_seed == 1) then
+							if (fmod(toReal(truncateToInt(e0(r_final))), 2.0) == 0 && fmod(toReal(truncateToInt(e2(r_final))), 2.0) == 0) then
+								1.0471975511965977461542144610932
+							else
+								0.0
+						else
+							if (Truchet_hex_crop_seed >= 2) then
+								let
+									hash_f = hash_shadertoy(FXY_h.x, FXY_h.y, Truchet_hex_crop_seed)
+									hash_f2 = hash_f - floor(hash_f)
+								in
+									if (hash_f2 < 0.5) then
+										1.0471975511965977461542144610932 #pi/3
+									else
+										0.0
+							else
+								0.0
+					#truchets
+					angle = atan2(FXY.y, FXY.x) + 0.52359877559829887307710723054658 - add # pi/6
+					coef = 0.47746482927568600730665129011754 #1.5 / pi
+					angle2 = floor(angle * coef) / coef + 0.52359877559829887307710723054658 + add
+					xy0 = vec2(cos(angle2), sin(angle2))
+					dist = dist(FXY, xy0)
+					FXY_f =
+						if (Truchet_hex_crop_inv > 0.5) then
+							if (dist > d1 || dist < d2) then
+								if (Truchet_hex_crop_mode < 0.5) then
+									vec2(0.0, 0.0)
+								else
+									if (Truchet_hex_crop_mode < 1.5) then
+										xy0
+									else
+										let
+											rangle = atan2(FXY.y - xy0.y, FXY.x - xy0.x)
+											D =
+												if (unit_rnd_0 < 0.5) then
+													d1
+												else
+													d2
+										in
+											xy0 + vec2(cos(rangle), sin(rangle)) * D
+							else
+								FXY
+						else
+							if (dist < d1 && dist > d2) then
+								if (Truchet_hex_crop_mode < 0.5) then
+									vec2(0.0, 0.0)
+								else
+									if (Truchet_hex_crop_mode < 1.5) then
+										xy0
+									else
+										let
+											rangle = atan2(FXY.y - xy0.y, FXY.x - xy0.x)
+											D =
+												if (unit_rnd_0 < 0.5) then
+													d1
+												else
+													d2
+										in
+											xy0 + vec2(cos(rangle), sin(rangle)) * D
+							else
+								FXY
+				in
+					(FXY_f + FXY_h) * weight
+			]]>
+		</string>
+	</transform_def>
+
+	<transform_def name="Truchet_hex_fill">
+		<node name="input_params">
+			<real name="Truchet_hex_fill">1</real>
+			<real name="Truchet_hex_fill_n" notes="number of squares in one arc">3</real>
+			<real name="Truchet_hex_fill_flipx" notes="0-1">1</real>
+			<real name="Truchet_hex_fill_flipy" notes="0-1">1</real>
+			<real name="Truchet_hex_fill_spreadx">1</real>
+			<real name="Truchet_hex_fill_spready">1</real>
+			<real name="Truchet_hex_fill_seed" notes="seed">1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="Truchet_hex_fill_n" />
+			<real name="Truchet_hex_fill_flipx" />
+			<real name="Truchet_hex_fill_flipy" />
+			<real name="Truchet_hex_fill_spreadx" />
+			<real name="Truchet_hex_fill_spready" />
+			<real name="Truchet_hex_fill_seed" />
+			<real name="Truchet_hex_fill_3n" />
+			<real name="Truchet_hex_fill_1_3n" />
+		</node>
+
+		 <int name="num_unit_randoms">6</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				let
+					f3n = 3.0 * Truchet_hex_fill_n
+					f13n = 1.0 / f3n
+				in
+					Truchet_hex_fill_init_result(Truchet_hex_fill, Truchet_hex_fill_n, Truchet_hex_fill_flipx, Truchet_hex_fill_flipy, Truchet_hex_fill_spreadx, Truchet_hex_fill_spready, Truchet_hex_fill_seed, f3n, f13n)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					rx = floor(log(unit_rnd_0) * (unit_rnd_1 < 0.5 ? Truchet_hex_fill_spreadx : -Truchet_hex_fill_spreadx))
+					rz = floor(log(unit_rnd_2) * (unit_rnd_3 < 0.5 ? Truchet_hex_fill_spready : -Truchet_hex_fill_spready))
+					FXY_h = vec2(sqrt3() *rx + halfsqrt3() * (unit_rnd_4 < 0.5 ? rz : -rz), 1.5 * rz)
+					add =
+						if (Truchet_hex_fill_seed == 1) then
+							if (fmod(toReal(truncateToInt(rx)), 2.0) == 0 && fmod(toReal(truncateToInt(rz)), 2.0) == 0) then
+								0.0
+							else
+								1.0
+						else
+							if (Truchet_hex_fill_seed >= 2) then
+								let
+									hash_f = hash_shadertoy(FXY_h.x, FXY_h.y, Truchet_hex_fill_seed)
+									hash_f2 = hash_f - floor(hash_f)
+								in
+									if (hash_f2 < 0.5) then
+										0.0
+									else
+										1.0
+							else
+								0.0
+					#exponential to make a tiled circle
+					rangle = floor(unit_rnd_5 * Truchet_hex_fill_3n) * twopi() * Truchet_hex_fill_1_3n
+					y_aux = (Truchet_hex_fill_flipy == 1 ? (add == 1 ? p_in.y : -p_in.y) : p_in.y)
+					x_aux = (Truchet_hex_fill_flipx == 1 ? (add == 1 ? p_in.x : -p_in.x) : p_in.x)
+					FXY = vec2(x_aux, y_aux) * Truchet_hex_fill_1_3n
+					aux_angle = FXY.y * pi() + rangle
+					sn = sin(aux_angle)
+					cs = cos(aux_angle)
+					a = 1 + FXY.x * pi()
+					FXY2 = vec2(cs, sn) * a
+					#split
+					A0 = atan2(FXY2.y, FXY2.x)
+					A1 = (A0 < 0) ? A0 + twopi() : A0
+					A = floor(1.5 * A1 * invpi())
+					ang = (pi() + A * twopi()) / 3.0
+					sn2 = sin(ang)
+					cs2 = cos(ang)
+					FXY_new = FXY2 - vec2(cs2, sn2) * 2.0
+					#rotate by 30 to fit the hex
+					FXY_f =
+						if (add == 1) then
+							vec2(halfsqrt3() * FXY_new.x - 0.5 * FXY_new.y, 0.5 * FXY_new.x + halfsqrt3() * FXY_new.y)
+						else
+							vec2(halfsqrt3() * FXY_new.x + 0.5 * FXY_new.y, -0.5 * FXY_new.x + halfsqrt3() * FXY_new.y)
+				in
+					(FXY_f * 0.5 + FXY_h) * weight
+			]]>
+		</string>
+	</transform_def>
+</user_transforms>

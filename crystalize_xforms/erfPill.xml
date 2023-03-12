@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="erfPill">
+		<node name="input_params">
+			<real name="erfPill">1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+		</node>
+
+		<int name="num_unit_randoms">2</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				erfPill_init_result(erfPill)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					nz = if p_in.y < 1.0 && p_in.y > -1.0
+								then vec2(errFunc(p_in.x),p_in.y)
+								else
+									let
+										nz0 = vec2(p_in.x, p_in.y + (p_in.y > 0.0 ? -1.0 : 1.0))
+										r = errFunc(length(nz0))
+										a = atan2(nz0.y, nz0.x)
+										cz = vec2(cos(a), sin(a)) * r
+									in
+										vec2(cz.x, cz.y + (cz.y >= 0.0 ? 1.0 : -1.0))
+				in
+					nz * weight
+			]]>
+		</string>
+	</transform_def>
+
+
+</user_transforms>

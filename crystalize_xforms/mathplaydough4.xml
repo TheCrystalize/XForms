@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="mathplaydough4">
+		<node name="input_params">
+			<real name="mathplaydough4">1</real>
+			<real name="mathplaydough4_operator1">1</real>
+			<real name="mathplaydough4_operator2">1</real>
+			<real name="mathplaydough4_operator3">1</real>
+			<real name="mathplaydough4_operator4">1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="op1" />
+			<real name="op2" />
+			<real name="op3" />
+			<real name="op4" />
+		</node>
+
+		<int name="num_gauss_randoms">2</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				mathplaydough4_init_result(mathplaydough4 * twoinvpi(), mathplaydough4_operator1, mathplaydough4_operator2, mathplaydough4_operator3, mathplaydough4_operator4)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					a = ((vec2(op1).x) * p_in.x) / (op2 * floor(gauss_rnd_0) * p_in.x)
+					b = ((vec2(op3).y) * p_in.y) / (op4 * floor(gauss_rnd_1) * p_in.y)
+				in
+					(mat2x2(sin(p_in.x) * (pi() * op1), -cos(p_in.y) * (pi() * op2),
+						cos(p_in.x) * (pi() * op3), sin(p_in.y) * (pi() * op4)) * (p_in * sqrt(a / b))) * weight
+			]]>
+		</string>
+	</transform_def>
+</user_transforms>

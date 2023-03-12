@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="linkX_what_the_fill">
+		<node name="input_params">
+			<real name="what_the_fill" minval="0.0">1</real>
+			<real name="what_the_fill_cyl_length">5</real>
+			<real name="what_the_fill_cyl_width" minval="0.0" maxval="0.95">0.05</real>
+			<real name="what_the_fill_cyl_blur_strength">1</real>
+			<real name="what_the_fill_inside_rotate">2</real>
+			<real name="what_the_fill_inside_size">1</real>
+			<real name="what_the_fill_inside_switch" minval="0.0" maxval="1.0">0</real>
+			<real name="what_the_fill_inside_strength" minval="0.5">1</real>
+			<real name="what_the_fill_outside_switch" minval="0.0" maxval="0.005">0</real>
+			<real name="what_the_fill_inner_weight1" minval="0.0" maxval="1.0">0.9</real>
+			<real name="what_the_fill_inner_weight2" minval="0.0" maxval="1.0">0.9</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="cl" />
+			<real name="cw" />
+			<real name="clbs" />
+			<real name="atr" />
+			<real name="size" />
+			<real name="iswitch" />
+			<real name="strength" />
+			<real name="terp2" />
+			<real name="iw1" />
+			<real name="iw2" />
+		</node>
+
+		<int name="num_unit_randoms">9</int>
+		<int name="num_gauss_randoms">2</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				linkX_what_the_fill_init_result(what_the_fill, what_the_fill_cyl_length * 10,
+					what_the_fill_cyl_width - 0.05, what_the_fill_cyl_blur_strength,
+					what_the_fill_inside_rotate * quartpi(), what_the_fill_inside_size, what_the_fill_inside_switch,
+					what_the_fill_inside_strength, what_the_fill_outside_switch,
+					what_the_fill_inner_weight1, what_the_fill_inner_weight2)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					rotm = mat2x2(
+						cos(atr), -sin(atr),
+						sin(atr), cos(atr))
+					atin = rotm * p_in * size
+					tmp = dot(atin, atin) + size
+					z = complex(atin.x, atin.y)
+					z1 = 1.0 / z
+					resulta = halfinvpi() * log((z + 1.0) / (-z + 1.0))
+					resultb = invpi() * log(z + sqrt(z * z + 1.0))
+					resultc = halfinvpi() * log(z1 + sqrt(z1 + 1.0) * sqrt(z1 - 1.0))
+					resultd = halfinvpi() * log((z * tmp) + (z * tmp))
+					epolar = vec2(resultd.im, resultd.re)
+					cpx = clamp(epolar.x, -0.5, 0.5)
+					cpy = clamp(epolar.y, 0.0, 0.5)
+					a1 = unit_rnd_8 * twopi()
+					s1 = gauss_rnd_1 * size
+					gauss = vec2(cos(a1), sin(a1)) * s1 + (atin / size)
+					arctanh = vec2(resulta.im, resulta.re)
+					arcsinh = vec2(resultb.im, resultb.re)
+					arcsech = lerp(vec2(resultc.im, resultc.re), vec2(-resultc.im, -resultc.re), if unit_rnd_6 <= 0.5
+																																												then 0.0
+																																												else 1.0)
+					rpolar = lerp(vec2(cpx, cpy), vec2(-cpx, -cpy), if unit_rnd_7 >= 0.5 then 1.0 else 0.0)
+					cylinder = vec2(gauss.x / sqrt(gauss.x * gauss.x + 1.0), gauss.y * strength) * 0.5
+					inside = if iswitch <= 0.0
+										then arctanh
+										else if iswitch <= 0.25
+													then arcsinh
+													else if iswitch <= 0.5
+																then arcsech
+																else if iswitch <= 0.75
+																			then rpolar
+																			else cylinder
+
+					cinx = clamp(inside.x, -0.5, 0.5)
+					ciny = clamp(inside.y, -0.5, 0.5)
+					log_out = (if iswitch > 0.75 then cylinder else vec2(ciny, cinx + floor(log(unit_rnd_0) * (if unit_rnd_1 < 0.5
+																																then strength
+																																else -strength) + 0.5))) * (weight * (1.8 - (cw * 2)))
+
+					scale = weight / (dot(p_in, p_in))
+					x_off = if p_in.x >= 0 then (1.0 + cw) else (-1.0 - cw)
+					sp_out = (if terp2 <= 0.0 then p_in else p_in * scale) + vec2(x_off, 0.0) * weight
+
+					a = unit_rnd_2 * twopi()
+					s = sqrt(abs(gauss_rnd_0)) * clbs
+					g = vec2(cos(a), sin(a)) * s + p_in
+					cyl1 = vec2((g.x * (1.0 + (cw * (halfinvpi() * 10.0 * fourpi())))) / sqrt(g.x * g.x + 1.0) - 19.0, g.y * (1.0 + cl)) * (weight * 0.05)
+					cyl2 = vec2((g.x * (1.0 + (cw * (halfinvpi() * 10.0 * fourpi())))) / sqrt(g.x * g.x + 1.0) + 19.0, g.y * (1.0 + cl)) * (weight * 0.05)
+				in
+					lerp(lerp(log_out, sp_out, if unit_rnd_3 >= iw1
+						then 1.0
+						else 0.0), lerp(cyl1, cyl2, if unit_rnd_4 >= 0.5
+							then 1.0
+							else 0.0), if unit_rnd_5 >= iw2
+								then 1.0
+								else 0.0)
+			]]>
+		</string>
+	</transform_def>
+</user_transforms>

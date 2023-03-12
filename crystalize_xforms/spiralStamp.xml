@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="spiralStamp">
+		<node name="input_params">
+			<real name="spiralStamp">1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+		</node>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				spiralStamp_init_result(spiralStamp)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					r = length(p_in)
+				in
+					vec2(p_in.x + cos(r) * sin(r), p_in.y + sin(r) * sin(r)) * weight
+			]]>
+		</string>
+	</transform_def>
+
+
+</user_transforms>

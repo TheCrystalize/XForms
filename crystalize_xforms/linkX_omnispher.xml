@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="linkX_omnispher">
+		<node name="input_params">
+			<real name="omnispher">1</real>
+			<real name="omnispher_radius"  minval="0">1</real>
+			<real name="omnispher_thickness" >0.1</real>
+			<real name="omnispher_contrast" minval="0">0.5</real>
+			<real name="omnispher_pow" >1.5</real>
+			<real name="omnispher_inside_rotate" >0</real>
+			<real name="omnispher_inside_size" >1</real>
+			<real name="omnispher_inside_switch" minval="0" maxval="1">0</real>
+			<real name="omnispher_inner_weight" minval="0" maxval="1">0.75</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="radius" />
+			<real name="radius1" />
+			<real name="contrast" />
+			<real name="power" />
+			<real name="isr" />
+			<real name="iss" />
+			<real name="iswitch" />
+			<real name="iw" />
+		</node>
+
+		<int name="num_unit_randoms">4</int>
+		<int name="num_gauss_randoms">1</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				let
+					radius1 = omnispher_radius + omnispher_thickness
+				in
+					linkX_omnispher_init_result(omnispher, omnispher_radius, radius1, omnispher_contrast, omnispher_pow, omnispher_inside_rotate, omnispher_inside_size, omnispher_inside_switch, omnispher_inner_weight)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					r = length(p_in)
+					alpha = radius / r
+					glynn = if r < radius1
+									then vec2(0.0, 0.0)
+									else if unit_rnd_0 > contrast * pow(alpha, power)
+												then p_in
+												else p_in * (alpha * alpha)
+
+					rotm = mat2x2(cos(isr), -sin(isr),
+												sin(isr), cos(isr))
+					rlin = rotm * p_in * iss
+
+					z = complex(rlin.x, rlin.y)
+					result = invpi() * log((z + 1.0) / (-z + 1.0))
+					arctanh = vec2(result.re, result.im)
+					result2 = twoinvpi() * log(z + sqrt(z * z + 1.0))
+					arcsinh = vec2(result2.re, result2.im)
+
+					b = unit_rnd_0 * twopi()
+					t = gauss_rnd_0 * iss
+					rgauss = vec2(cos(b), sin(b)) * t + rlin
+					hemisphere = rgauss * (1.0 / sqrt(dot(rgauss, rgauss) + 1))
+
+					r2 = dot(p_in, p_in)
+					spher = if r2 >1
+									then if unit_rnd_1 < 0.5
+												then rlin / r2
+												else rlin
+									else vec2(0.0, 0.0)
+
+					inside = (if iswitch <= 0.0
+										then rlin
+										else if iswitch <= 0.25
+													then arctanh
+													else if iswitch <= 0.5
+																then arcsinh
+																else if iswitch <= 0.75
+																			then hemisphere
+																			else spher)
+					rb = length(inside)
+					crin = radius - (radius1 * 0.5)
+					crout = radius + (radius1 * 0.5)
+					rmin = min(crin, crout)
+					rmax = max(crin, crout)
+					ang = atan2(inside.y, inside.x)
+					s = sin(ang)
+					c = cos(ang)
+					rinside = if rb > crout || rb < crin
+										then if 1.0 == 1.0
+													then vec2(0.0, 0.0)
+													else vec2(c, s) * (crout * radius)
+										else inside * radius
+				in
+					lerp(glynn, rinside, if unit_rnd_1 <= iw
+																then 1.0
+																else 0.0)
+			]]>
+		</string>
+	</transform_def>
+</user_transforms>
