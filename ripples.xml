@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="ripples">
+		<node name="input_params">
+			<real name="ripples">1</real>
+			<real name="ripples_strength" minval="-2.0" maxval="2.0">1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="rip" />
+		</node>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				ripples_init_result(ripples, ripples_strength)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					r0 = length(p_in)
+					z = vec2(sin(r0) * rip, r0)
+					r = weight * length(z)
+					a = atan2(p_in.y, p_in.x)
+				in
+					vec2(cos(a), sin(a)) * r
+			]]>
+		</string>
+	</transform_def>
+</user_transforms>

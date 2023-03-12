@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="glynnia_x_powerh">
+		<node name="input_params">
+			<real name="glynnia_x_powerh">1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+		</node>
+
+		<int name="num_unit_randoms">1</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				glynnia_x_powerh_init_result(glynnia_x_powerh * halfsqrt2())
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					r3 = exp(p_in.x) * sqrt2()
+					r2 = length2(p_in)
+					r = length(p_in)
+					aux = if r2 > 1 then 1.0 else -1.0
+					a = atan2(p_in.y, p_in.x)
+				in
+					(if unit_rnd_0 > 0.5
+						then vec2(aux * sqrt(r + p_in.x), p_in.y / sqrt(r + p_in.x))
+						else vec2(cos(a), sin(a)) * -r3) * weight
+			]]>
+		</string>
+	</transform_def>
+</user_transforms>

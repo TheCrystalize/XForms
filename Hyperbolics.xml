@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="hypershape">
+		<!-- Put together by Crystalize, based on work by zy0rg and Undefined -->
+		<node name="input_params">
+			<real name="hypershape">1</real>
+			<real name="hypershape_n"minval="3">3</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="alpha" />
+			<real name="alphacoeff" />
+			<real name="beta" />
+		</node>
+
+		<int name="num_unit_randoms">2</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				let
+					n = floor(hypershape_n)
+					alpha = twopi() / n
+					alphacoeff = tan(alpha * 0.5) * 2.0
+					beta = sqrt2() * cos(alpha * 0.5)
+				in
+					hypershape_init_result(hypershape * 0.5, alpha, alphacoeff, beta)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					da = (atan2(p_in.y, p_in.x) + pi()) / alpha
+					rad = length(p_in)
+					za0 = floor(da)
+					xa0 = da - za0
+					xa1 = if(xa0 > 0.5, 1.0 - xa0, xa0)
+					za = if(xa0 > 0.5, za0 + 1.0, za0)
+					si = if(xa0 > 0.5, -1.0, 1.0)
+					xa = atan(xa1 * alphacoeff) / alpha
+					co = beta / cos(xa * alpha)
+					ang = (za + si * xa) * alpha - pi()
+
+					p = vec2(cos(ang), sin(ang)) * (co * rad)
+					r = dot(p, p)
+				in
+					(p * 2.0 * (sqrt2() - sqrt(2.0 - r)) / r) * weight
+			]]>
+		</string>
+	</transform_def>
+
+
+
+	<transform_def name="hypersize">
+		<node name="input_params">
+			<real name="hypersize">1</real>
+			<real name="hypersize_p">1</real>
+			<real name="hypersize_q">1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="p" />
+			<real name="q" />
+			<real name="b" />
+		</node>
+
+		<int name="num_unit_randoms">1</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				let
+					pa = hypersize_p
+					qa = hypersize_q
+					c = cos(pi() / qa)
+					s = sin(pi() / pa)
+					d = 1.0 / sqrt(1.0 - ((s * s) / (c * c)))
+					r = 1.0 / sqrt(((c * c) / (s * s)) - 1.0)
+					b = d - r
+				in
+					hypersize_init_result(hypersize, pa, qa, b)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				p_in * b * weight
+			]]>
+		</string>
+	</transform_def>
+
+
+
+	<transform_def name="hypertile3">
+		<!-- Crystalize put this together, but Zueuk is the real genius! ^_^ -->
+		<node name="input_params">
+			<real name="hypertile3">1.0</real>
+			<real name="hypertile3_p">3.0</real>
+			<real name="hypertile3_q">3.0</real>
+			<real name="hypertile3_r">4.0</real>
+			<real name="hypertile3_shift"minval="0.0"maxval="1.0">0.5</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="h" />
+			<real name="b1" />
+			<real name="b2" />
+			<real name="rot1" />
+			<real name="rot2" />
+			<real name="rot3" />
+			<real name="n" />
+			<real name="shift" />
+		</node>
+
+		<int name="num_unit_randoms">2</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				let
+					rad = pi() / 180
+					o = acosh((cos(pi() / hypertile3_p) + cos(pi() / hypertile3_q) * cos(pi() / hypertile3_r)) / (sin(pi() / hypertile3_q) * sin(pi() / hypertile3_r)))
+					p = asinh(sin(pi() / hypertile3_q) / sin(pi() / hypertile3_p) * sinh(o))
+					q = asinh(sin(pi() / hypertile3_r) * sinh(p))
+					r = asinh(sin(pi() / hypertile3_r) * sinh(p) / sin(pi() / hypertile3_q))
+					h = tanh(q / 2.0)
+					b1 = tanh(acosh(cosh(r) / cosh(q)) / 2.0)
+					b2 = tanh(acosh(cosh(p) / cosh(q)) / 2.0)
+					rot1 = (360 / hypertile3_p) * rad
+					rot2 = (360 / hypertile3_q) * rad
+					rot3 = (360 / hypertile3_r) * rad
+					n = if hypertile3_shift < 0.25 then 0.0
+								else if hypertile3_shift < 0.5 then hypertile3_p
+									else if hypertile3_shift < 0.75 then hypertile3_q
+										else hypertile3_r
+				in
+					hypertile3_init_result(hypertile3, h, b1, b2, rot1, rot2, rot3, n, hypertile3_shift)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					c1 = complex(h, 0.0)
+					c2 = complex(0.0, b1)
+					c3 = complex(0.0, b2)
+					z0 = complex(p_in.x, p_in.y)
+					z = if shift < 0.25 then z0
+							else if shift < 0.5 then (z0 + c1) / (c1 * z0 + 1.0)
+								else if shift < 0.75 then (z0 - c2) / (c2 * z0 + 1.0)
+								 else (z0 + c3) / (-c3 * z0 + 1.0)
+
+					m0 = (z - c1) / (-c1 * z + 1.0)
+					r1 = complex(cos(rot1), sin(rot1)) * m0
+					m0f = (r1 + c1) / (c1 * r1 + 1.0)
+
+					m1 = (z + c2) / (-c2 * z + 1.0)
+					r2 = complex(cos(rot2), sin(rot2)) * m1
+					m1f = (r2 - c2) / (c2 * r2 + 1.0)
+
+					m2 = (z - c3) / (c3 * z + 1.0)
+					r3 = complex(cos(rot3), sin(rot3)) * m2
+					m2f = (r3 + c3) / (-c3 * r3 + 1.0)
+
+					pfr = if shift < 0.25 then 0.0
+									else if shift < 0.5 then rot1
+										else if shift < 0.75 then rot2
+											else rot3
+					fr = floor(unit_rnd_1 * n) * pfr
+					rand = unit_rnd_0 * 3.0
+					f3 = if rand < 1.0 then m0f else if rand < 2.0 then m1f else m2f
+					f0 = if shift < 0.25 then f3
+								else if shift < 0.5 then (f3 - c1) / (-c1 * f3 + 1.0)
+									else if shift < 0.75 then (f3 + c2) / (-c2 * f3 + 1.0)
+										else (f3 - c3) / (c3 * f3 + 1.0)
+					f = if shift < 0.25 then f0
+							else complex(cos(fr), sin(fr)) * f0
+				in
+					toVec2(f) * weight
+			]]>
+		</string>
+	</transform_def>
+</user_transforms>

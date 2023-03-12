@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="hexi">
+		<node name="input_params">
+			<real name="hexi">1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+		</node>
+
+		<int name="num_unit_randoms">2</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				hexi_init_result(hexi)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					rin = p_in * (pi() / 3.0)
+					r = exp(rin.y)
+					up = vec2(cos(rin.x), sin(rin.x)) * r
+					den_re = -up.x + 1.0
+					den_im = -up.y
+					num_re = up.x + 1.0
+					num_im = up.y
+					inv_r2 = 1 / (den_re * den_re + den_im * den_im) * weight
+				in
+					vec2(num_re * den_re + num_im * den_im,
+							num_im * den_re - num_re * den_im) * inv_r2
+			]]>
+		</string>
+	</transform_def>
+</user_transforms>

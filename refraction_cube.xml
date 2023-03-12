@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="refraction_cube">
+		<node name="input_params">
+			<real name="refraction_cube">1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+		</node>
+
+		<int name="num_unit_randoms">2</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				refraction_cube_init_result(refraction_cube)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					a = sinh(p_in.x / p_in.y) * weight
+					b = cosh(p_in.y / p_in.x) * weight
+					x1 = (a * p_in.x * (unit_rnd_0) / halfpi()) * 2
+					x2 = (a * p_in.y * (unit_rnd_1) / halfpi()) * x1
+					x3 = (x1 * x2) * (p_in.x / pi())
+					y1 = (b * p_in.x * (unit_rnd_0) / quartpi()) * 2
+					y2 = (b * p_in.y * (unit_rnd_1) / quartpi()) * y1
+					y3 = (y1 * y2) * (p_in.y / pi())
+				in
+					mat2x2(cos(x1 * x3), sin(y1 * y3), cos(x2 * x3), sin(y2 * y3)) * vec2(weight)
+			]]>
+		</string>
+	</transform_def>
+
+
+</user_transforms>
