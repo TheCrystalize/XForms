@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>	
+	<transform_def name="quaternionOG">
+		<node name="input_params">
+			<real name="quaternion">1</real>
+			<real name="quaternion_rotate">0</real>
+			<real name="quaternion_terp1" minval="0" maxval="1">0</real>
+			<real name="quaternion_terp2" minval="0" maxval="1">0</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="ro" />
+			<real name="terp1" />
+			<real name="terp2" />
+		</node>
+
+		<int name="num_unit_randoms">1</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				quaternionOG_init_result(quaternion * invpi(), quaternion_rotate * halfpi(), quaternion_terp1, quaternion_terp2)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					rmat = mat2x2(cos(ro), -sin(ro),
+						      sin(ro), cos(ro))
+					a = rmat * vec2(p_in.x, p_in.x)
+					b = rmat * vec2(p_in.y, p_in.y)
+					zw = complex(dot(a, a), dot(b, b))
+					quat = vec4(a.x * b.x - a.y * b.y - zw.re * zw.im - zw.re * zw.im,
+						    a.x * b.y + a.y * b.x + zw.re * zw.im - zw.re * zw.im,
+						    a.x * zw.im - a.y * zw.im + zw.re * b.x + zw.re * b.y,
+						    a.x * zw.im + a.y * zw.im - zw.re * b.y + zw.re * b.x)
+					x = e0(quat)
+					y = e1(quat)
+					w = e2(quat)
+					z = e3(quat)
+					q = complex(w, z)
+					result = (weight)  * log((q + 1.0) / (-q + 1.0))
+					vxy = vec2(x * x - y * y, 2.0 * x * y)
+					r = complex(vxy.x, vxy.y)
+					result2 = weight * log((r + 1.0) / (-r + 1.0))
+				in
+					vec2(result.im * result2.im, result.re * result2.re)
+			]]>
+		</string>
+	</transform_def>
+</user_transforms>

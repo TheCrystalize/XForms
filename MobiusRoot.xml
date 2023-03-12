@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="mobius_root">
+		<node name="input_params">
+			<real name="mobius_root">1</real>
+			<real name="mobius_root_a_re">1</real>
+			<real name="mobius_root_a_im">0</real>
+			<real name="mobius_root_b_re">0</real>
+			<real name="mobius_root_b_im">0</real>
+			<real name="mobius_root_c_re">0</real>
+			<real name="mobius_root_c_im">0</real>
+			<real name="mobius_root_d_re">1</real>
+			<real name="mobius_root_d_im">0</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+			<real name="a_re" />
+			<real name="a_im" />
+			<real name="b_re" />
+			<real name="b_im" />
+			<real name="c_re" />
+			<real name="c_im" />
+			<real name="d_re" />
+			<real name="d_im" />
+		</node>
+
+		<string name="winter_init_function">
+			<![CDATA[
+					mobius_root_init_result(mobius_root, mobius_root_a_re, mobius_root_a_im, mobius_root_b_re, mobius_root_b_im, mobius_root_c_re, mobius_root_c_im, mobius_root_d_re, mobius_root_d_im)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+        let
+					a = complex(a_re, a_im)
+					b = complex(b_re, b_im)
+					c = complex(c_re, c_im)
+					d = complex(d_re, d_im)
+					z = complex(p_in.x, p_in.y)
+					r = sqrt((a * z + b) / (c * z + d))
+        in
+					toVec2(r) * weight
+			]]>
+		</string>
+	</transform_def>
+</user_transforms>

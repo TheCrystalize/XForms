@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<user_transforms>
+	<transform_def name="division_log_ly">
+		<node name="input_params">
+			<real name="division_log_ly">1</real>
+		</node>
+
+		<node name="internal_params">
+			<real name="weight" />
+		</node>
+
+		<int name="num_unit_randoms">1</int>
+
+		<string name="winter_init_function">
+			<![CDATA[
+				division_log_ly_init_result(division_log_ly)
+			]]>
+		</string>
+
+		<string name="winter_eval_function">
+			<![CDATA[
+				let
+					r = weight * if unit_rnd_0 > 0.5 then 1.0 / length(p_in) else length(p_in)
+					a = atan2(p_in.x * log(p_in.y), p_in.x)
+				in
+					vec2(cos(a), if unit_rnd_0 > 0.5 then -sin(a) else sin(a)) * r
+			]]>
+		</string>
+	</transform_def>
+</user_transforms>
