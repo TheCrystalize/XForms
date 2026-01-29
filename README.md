@@ -20,3 +20,8 @@ If you clone this git repo you can use this method:
     git clone https://git.pugnacious.site/Crystalize/crystalize_xforms.git
 
 This method will create a subfolder called **crystalize_xforms** and everything can be loaded in underneath that.
+
+## Transform Previews
+
+Thanks to the efforts of the community and most especially SirFancy, the transform previews have been generated for most of the main branch.
+They are found in the transform_thumbs.zip file.  To install them, locate the Chaotica program directory and put them in the /data/transform_thumbs folder alongside the default images.
